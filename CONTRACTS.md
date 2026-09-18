@@ -1,15 +1,18 @@
 # The three tools
 
-This kit carries no tool code. Code welds to a language, a layout and a
-schema, so a copied tool carries the other project's shape into yours.
-This file states what each tool must do and when to build it. Build each
-one on its own trigger, and not before.
+The kit ships the sweep and describes the gate and the map. A gate welds
+to a test runner and a map welds to a language, so a copied one would
+carry another project's shape into yours. The sweep welds to neither,
+because it reads bytes.
+
+This file states what each tool must do and when to build it. Build the
+gate and the map on their own triggers, and not before.
 
 Every one of the three exists for the same reason: the assistant's
 context is the scarce resource, and each tool turns a large amount of
 output into a small amount of output.
 
-Keep this file until all three tools exist. Delete it then.
+Keep this file until the gate and the map exist. Delete it then.
 
 ## The gate
 
@@ -97,8 +100,12 @@ only for what the map does not answer.
 **What it is.** One command that applies one mechanical edit across many
 tracked files.
 
-**The trigger to build it.** Build it at the first change that is the
-same edit in more than three files.
+**It ships with the kit**, at `meta/tools/sweep.py`, with 25 tests. Copy
+both. The list below is what it already does, kept so that a port to
+another language has a specification.
+
+**The trigger to use it.** Use it at the first change that is the same
+edit in more than three files.
 
 **Why it exists.** Two measured hazards, not neatness. A Bash heredoc
 eats backslashes, which corrupted a patch twenty-three times. A

@@ -1,9 +1,9 @@
 Copy everything below the line "COPY FROM HERE" into
 `.claude/agents/sweeper.md`. Replace every `{{slot}}`.
 
-Install this agent only after a sweep tool exists. The brief is unusable
-before then, because every rule in it is about running the sweep. Read
-`meta/CONTRACTS.md` for what the sweep must do.
+Install this agent once the sweep exists. The kit ships one at
+`meta/tools/sweep.py`, so copy that first. The brief is unusable without
+it, because every rule in it is about running the sweep.
 
 COPY FROM HERE
 ---

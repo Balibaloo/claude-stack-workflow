@@ -207,7 +207,7 @@ that a session obeys literally.
 | `{{gate command}}` | The one command that runs the whole suite. Use the plain test command until a gate exists. | brief, implementer, reviewer | `python -m rota.tools.gate` |
 | `{{wall time}}` | How long a full suite run takes. | implementer, reviewer | eight minutes |
 | `{{map command}}` | The command that answers where a name lives. Cut the line until a map exists. | brief, all three agents | `python -m rota.tools.map` |
-| `{{sweep command}}` | The command that edits many files at once. | sweeper | `python -m rota.tools.sweep` |
+| `{{sweep command}}` | The command that edits many files at once. | sweeper | `python tools/sweep.py` |
 | `{{risky surface}}` | The part of the system the tests do not fully cover. | brief | the seats, the briefs, the write pipeline or a predicate |
 | `{{end-to-end run}}` | One run of the real system, start to finish, with its command. | brief | a full night on a lineage repository |
 | `{{commit standard}}` | The commit format. | brief, implementer, sweeper, CONTRIBUTING | Conventional Commits, a summary line and a prose body, no footer |
@@ -259,12 +259,23 @@ assume the suite section is the only part that changes.
 
 ## Step 5: the tools, each on its own trigger
 
-This kit carries no tool code. Code welds to a language and a layout,
-and a copied tool would carry the other project's shape into yours.
-`meta/CONTRACTS.md` states what each tool must supply and when to build
-it. Read it when a trigger fires, and not before.
+The kit ships one tool and describes two. Code welds to a language and
+a layout, so a copied gate or map would carry another project's shape
+into yours. `meta/CONTRACTS.md` states what each of those two must
+supply and when to build it. Read it when a trigger fires, and not
+before.
 
-The short version:
+**The sweep ships, because its two hazards are platform facts and not
+project facts.** Copy `meta/tools/sweep.py` to `tools/sweep.py` and
+`meta/tools/test_sweep.py` beside your other tests. It is Python, and it
+reads bytes, so it sweeps a repository written in any language. Run its
+tests once to prove git behaves as it expects:
+
+```
+python -m pytest tools/test_sweep.py -q
+```
+
+The short version of all three:
 
 - A **gate** runs the suite and prints five lines, so that a full run
   costs a few thousand tokens of your context instead of tens of
@@ -273,8 +284,8 @@ The short version:
 - A **map** answers where a name is defined and used, in a few lines.
   Build it when one file passes a few thousand lines.
 - A **sweep** applies one mechanical edit across many tracked files and
-  keeps each file's line endings. Build it at the first edit that
-  touches more than three files.
+  keeps each file's line endings. It ships with the kit. Use it at the
+  first edit that touches more than three files.
 
 Until a tool exists, the brief's line that names it is false. Cut that
 line from your brief. Then record what you cut, in a section of
@@ -312,8 +323,9 @@ meta/hooks/
 ```
 
 Keep `meta/agents/` until all three agents are installed. Keep
-`meta/CONTRACTS.md` until all three tools exist. Delete `meta/` itself
-when both are empty.
+`meta/tools/` until you have copied the sweep. Keep `meta/CONTRACTS.md`
+until the gate and the map exist. Delete `meta/` itself when all three
+are empty.
 
 ## How you know the adoption worked
 
