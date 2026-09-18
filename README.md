@@ -1,11 +1,20 @@
 # Adopt this workflow
 
-## For the person copying this
+## For the person installing this
 
-Copy this whole directory into the destination repository as `meta/`.
+Run this in the destination repository:
+
+```
+git clone --depth 1 https://github.com/Balibaloo/claude-stack-workflow.git meta
+rm -rf meta/.git
+```
+
 Then say to the assistant there: "Read `meta/README.md` and adopt the
-workflow." Everything below this section is addressed to that assistant,
-not to you.
+workflow."
+
+Everything below this section is addressed to that assistant, not to
+you. The assistant grills you before it writes any file, so keep about
+twenty minutes for the questions.
 
 You are the assistant in a repository that does not yet run this
 workflow. Someone copied this `meta/` directory into your repository so
