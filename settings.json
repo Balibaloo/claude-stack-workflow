@@ -1,0 +1,20 @@
+{
+  "hooks": {
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo '{\"hookSpecificOutput\":{\"hookEventName\":\"UserPromptSubmit\",\"additionalContext\":\"Standing instruction for this turn: when you reach what feels like a stopping point, ask whether you are actually blocked. If you are not blocked, continue working. If you believe you are really blocked, use your best reasoning about whether the blocker is genuinely one for the user to resolve before you stop.\"}}'",
+            "timeout": 10
+          },
+          {
+            "type": "command",
+            "command": "python \"${CLAUDE_PROJECT_DIR}/.claude/hooks/context_count.py\"",
+            "timeout": 10
+          }
+        ]
+      }
+    ]
+  }
+}
