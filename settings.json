@@ -1,4 +1,9 @@
 {
+  "permissions": {
+    "allow": [
+      "Bash(python tools/handover.py:*)"
+    ]
+  },
   "hooks": {
     "UserPromptSubmit": [
       {

@@ -54,6 +54,7 @@ Add these lines to `.gitignore` when the matching thing exists.
 .gate-baseline.json
 .gate.log
 .claude/settings.local.json
+.handover/
 ```
 
 ## Cost anchors
@@ -89,11 +90,71 @@ last three frames whenever a frame that changes the workflow closes.
 - A design record written by the assistant: about 8k of output. A status
   line: about 1k. (borrowed)
 
-## The peers
+## The peers and the reserve
 
 {{Other sessions of the assistant on this machine, and which model each
-one runs. The hand-off rule in the brief needs this. Fill it the first
-time you hand a frame off.}}
+one runs. Fill this the first time you hand a frame off.}}
+
+A peer's name changes when its session restarts. A session id does not.
+So address a peer by the session id, and record the name only so that a
+person can find the window.
+
+The reserve lives in `.handover/` at the repository root, and a worktree
+shares the same one. It is machine state, not a record, and `.gitignore`
+holds it. `python tools/handover.py peers` prints it. The record of a
+hand-off is the status line in the stack.
+
+The context hook enrols every session that sends a prompt, in
+`.handover/sessions/`, with its peer name and its context estimate. So a
+session the Principal only pasted into is still reachable by a message,
+and `peers` can show which standby is the cleanest. An unread claim
+returns to the queue as a vacancy after fifteen minutes. So a session
+that wakes and cannot act does not hold a frame still.
+
+Two facts about the harness decide the whole mechanism. Both were read
+from one machine's own transcripts, and both should be re-read on yours
+before anyone writes a rule about them.
+
+- An idle session does receive a message, and fast. Of 248 cross-session
+  messages, none was lost. 57 that landed in sessions idle for over five
+  minutes drained in a median of 0.010 seconds, one across 35.8 hours.
+  (observed: the transcripts of five projects)
+- A session parked mid-turn drains nothing. One session held its inbound
+  messages for six hours while it waited on a tool decision. A permission
+  prompt parks a session the same way. (observed: the same corpus)
+
+Three things a message cannot do, which is why the hand-off uses a file.
+Each one cost a real hand-off.
+
+- It cannot carry a session id. A peer is addressed by name, a name is
+  recycled between sessions, and one session answered to two names on two
+  days. A sender once broadcast a frame with the words "claim it only if
+  your session id is 4286e076". (observed)
+- It cannot prove it landed. Four sends to a listed but closed session
+  returned success and reached nobody. One receiver woke in 68
+  milliseconds after 15.7 hours and spent its whole turn on a usage-limit
+  notice. (observed)
+- It is not free for the receiver. A one-line liveness probe made a
+  standby answer and then read the git log and the stack unprompted, in
+  the same turn. The probe spends the asset it is measuring. (observed)
+
+Numbers this project should measure once, with the borrowed values from
+the machine the tool was built on:
+
+- The wake: the time from the claim file appearing to the standby's first
+  turn. 6 seconds. (borrowed)
+- The cost of waiting: nothing. A process blocks, and the model spends no
+  tokens until it wakes. (borrowed)
+- The cost of arming a standby: one command and one line of reply.
+  {{measure it, and write the number here}}
+- The cost of a re-arm when the wait runs out: one turn per hour of
+  standby duty by default. {{measure it, then decide the `--wait` value}}
+- How long the harness lets a background process live. A heartbeat beat
+  150 times over 49.7 minutes here and then ended on its own clock, with
+  no interruption, across idle turns and busy ones. The longest gap
+  between two beats was 22 seconds against a 20 second interval. The
+  ceiling is above 50 minutes and is otherwise unknown. {{measure your
+  own, then set `--wait` below it}}
 
 ## Decisions by the assistant
 

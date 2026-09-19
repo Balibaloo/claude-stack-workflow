@@ -12,6 +12,11 @@ rm -rf meta/.git
 Then say to the assistant there: "Read `meta/README.md` and adopt the
 workflow."
 
+If that repository already runs this workflow and you are updating it,
+clone the kit again the same way and say instead: "Read the 'Update an
+installation' section of `meta/README.md` and apply it." The adoption
+steps would overwrite records that the project has already earned.
+
 Everything below this section is addressed to that assistant, not to
 you. The assistant grills you before it writes any file, so keep about
 twenty minutes for the questions.
@@ -21,8 +26,94 @@ workflow. Someone copied this `meta/` directory into your repository so
 that you can adopt the workflow yourself. This README is your
 instruction. Read it whole before you write anything.
 
+**If this repository already runs the workflow, stop and read "Update an
+installation" below instead.** The numbered steps after it are for a
+first adoption. They would overwrite records that a running project has
+already earned.
+
 The workflow was built in another project, a Python repository called
 rota. Every rota fact is out of these files. What is left is the method.
+
+## Update an installation
+
+Read this only when the repository already runs the workflow. The
+Principal will say that the kit is updated. `meta/` was deleted at the
+end of the adoption, so it is back now only because somebody cloned it
+again.
+
+Nothing here replaces a record. `plans/` is yours and this kit never
+touches it. The five artifacts are yours too, and the edits below are
+paragraph edits, never file copies.
+
+Do the steps in this order. The order matters, because step 1 stops step
+3 from parking a session.
+
+1. **The permission rule, first.** Add this to `.claude/settings.json`
+   under `permissions.allow`, with your own interpreter in place of
+   `python`:
+
+   ```
+   "Bash(python tools/handover.py:*)"
+   ```
+
+   Do this before anything arms a watcher. A permission prompt parks a
+   session in the middle of a turn, and a parked session receives nothing
+   at all, not a message and not a task notification. One session held its
+   inbound messages for six hours that way. Merge into the rules that are
+   already there. Never replace the block.
+
+2. **The tool.** Copy `meta/tools/handover.py` to `tools/handover.py` and
+   `meta/tools/test_handover.py` beside your other tests. Run them once:
+   38 tests, a few seconds. Add `.handover/` to `.gitignore`.
+
+3. **The hook.** Your `.claude/hooks/context_count.py` is an older copy.
+   Take three things from `meta/hooks/context_count.py` into it, and keep
+   every local change you have made: the `repo_root` function, the `enrol`
+   and `peer_name` functions, and the `waiting` function, plus the four
+   lines in `main` that call them. Then check the hook by hand:
+
+   ```
+   echo '{"session_id":"test1234","transcript_path":"","cwd":"<this repo>"}' | python .claude/hooks/context_count.py
+   ```
+
+   It must print one JSON object and exit 0. A hook that raises breaks
+   the prompt of every session in the repository, so test it before you
+   trust it.
+
+4. **The brief.** Your `CLAUDE.md` holds the old hand-off rule. It tells a
+   session to list its peers and send each one a liveness probe. That rule
+   cannot work and its stated reason was wrong, so replace it:
+
+   - Replace the whole `400k:` bullet with the `400k:` bullet from
+     `meta/brief.md`.
+   - Replace the `300k:` bullet with the one from `meta/brief.md`, which
+     adds one command.
+   - Add the `# Standby duty` section from `meta/brief.md`, whole.
+   - Add step 1 of the `On wake:` list from `meta/brief.md`, and renumber
+     the steps that follow.
+   - Replace every `{{slot}}` in the text you moved.
+
+5. **The records.** Add the three blocks from the "The peers and the
+   reserve" section of `meta/operating-facts.md` to your
+   `plans/operating-facts.md`: the two harness facts, the three things a
+   message cannot do, and the numbers to measure. They are measurements,
+   so they belong in the records and not in the brief.
+
+6. **The command, if your harness has slash commands.** Copy
+   `meta/commands/standby.md` to `.claude/commands/standby.md`, replace
+   both `{{interpreter}}` slots, and delete the comment block it names.
+   Then a new session joins the reserve with one word instead of a paste.
+
+7. **Prove it, then say so.** Run acceptance lines 7 to 13 at the end of
+   this README. Report which ones held. Push a frame for anything that did
+   not, and never report an untested line as done.
+
+If your `plans/` records say that peer messaging is broken, that sentence
+is false and it was measured false. Correct it with a dated line, and say
+in the correction that a message does arrive and is the wrong carrier for
+other reasons. `meta/CONTRACTS.md` carries the numbers.
+
+Delete `meta/` again when these steps are done.
 
 ## What the workflow is
 
@@ -46,19 +137,27 @@ Four beliefs drive every rule below.
 Check these three before step 1. Each one is a thing the kit needs and
 cannot supply.
 
-1. **An interpreter for the context hook.** The hook is 120 lines of
+1. **An interpreter for the context hook.** The hook is 260 lines of
    Python 3. `meta/settings.json` calls it by the bare name `python`.
    Run `python --version` in the project's shell. If no Python is there,
    you have two choices: install one, or port the hook to a language
    this project already has. The hook reads a JSON object from stdin,
    counts the bytes of a JSONL file, and prints one JSON object. Any
-   language does it. Do not skip the hook. Wake step 5 needs the session
-   id that only the hook supplies.
-2. **A way to list and message your peer sessions.** The brief's
-   hand-off paragraph says to list the peers at 400k and send each one a
-   line. If your harness cannot do either, keep the paragraph and add a
-   sentence naming what is missing. A session that reaches 400k with no
-   hand-off must instead write the status line, commit, and stop.
+   language does it. Do not skip the hook. The wake steps need the
+   session id that only the hook supplies, and the hand-off needs the
+   enrolment that the hook writes.
+2. **A background process that outlives a turn.** The hand-off wakes a
+   fresh session by exiting a process that the session started. Check two
+   things in your harness: it can start a command in the background, and
+   it tells the session when that command exits. On the machine this kit
+   was built on, 109 of 142 such notifications woke a session that was
+   already idle, after up to 73.8 minutes of silence. If your harness has
+   no such background process, read the degraded path at the end of
+   `meta/CONTRACTS.md` and cut the standby section from the brief.
+
+   Peer messaging is not the thing to check. It works, and the hand-off
+   still does not use it as its first route. `meta/CONTRACTS.md` says why,
+   with the numbers.
 3. **A way to run a sub-agent.** The rule that the writer never reviews
    its own diff needs a second context. If your harness has no
    sub-agents, that rule needs a different shape, and you should raise
@@ -185,6 +284,8 @@ Nothing works before these five exist. Write them in this order.
    already have. Change the interpreter name from `python` to the
    answer of question 6 if they differ. The hook prints your session id
    at every wake, and the wake procedure needs that id to claim a frame.
+   Keep the `permissions.allow` entry in that file as well. It is not a
+   convenience, and step 5 of this README says what it prevents.
 
 Create `plans/archive/` now. A closed frame moves there, and so do the
 grill record, every scope report, and every design record.
@@ -200,7 +301,7 @@ that a session obeys literally.
 | `{{repository path}}` | The absolute path of the checkout. | implementer, sweeper | `D:/repos/rota` |
 | `{{branch}}` | The working branch. | implementer | `rota/foundation` |
 | `{{shell}}` | The shell an agent's commands run in. | implementer | Git Bash |
-| `{{interpreter}}` | The exact command that runs a repository script. | implementer, reviewer | `.venv/Scripts/python.exe` |
+| `{{interpreter}}` | The exact command that runs a repository script. | brief, implementer, reviewer, standby command | `.venv/Scripts/python.exe` |
 | `{{builder model}}` | The model an implementer or a sweeper runs on. | brief, implementer, sweeper | Opus |
 | `{{judge model}}` | The model of the session that holds the frame. | brief | Fable |
 | `{{test command for one file}}` | How an agent runs one test file. | implementer, reviewer, sweeper | `python -m pytest tests/x.py -q` |
@@ -259,7 +360,7 @@ assume the suite section is the only part that changes.
 
 ## Step 5: the tools, each on its own trigger
 
-The kit ships one tool and describes two. Code welds to a language and
+The kit ships two tools and describes two. Code welds to a language and
 a layout, so a copied gate or map would carry another project's shape
 into yours. `meta/CONTRACTS.md` states what each of those two must
 supply and when to build it. Read it when a trigger fires, and not
@@ -275,7 +376,28 @@ tests once to prove git behaves as it expects:
 python -m pytest tools/test_sweep.py -q
 ```
 
-The short version of all three:
+**The hand-off ships, because the defect it repairs is in the harness and
+not in a project.** Copy `meta/tools/handover.py` to `tools/handover.py`,
+`meta/tools/test_handover.py` beside your other tests, and
+`meta/commands/standby.md` to `.claude/commands/standby.md`. Replace the
+`{{interpreter}}` slot in the command file. Run its tests once:
+
+```
+python -m pytest tools/test_handover.py -q
+```
+
+**Keep the permission rule that `meta/settings.json` carries**, and match
+its interpreter to your answer to question 6. The rule is
+`Bash(python tools/handover.py:*)`, and it is not a convenience. A
+permission prompt parks a session mid-turn, and a parked session drains
+nothing. One session held its messages for six hours that way. So a
+standby that must ask permission to arm its own watcher can never be
+woken at all, and the Principal cannot see why.
+
+Copy it at adoption, even with one session open. The day a hand-off
+matters is the day the sender has no context left to write a tool.
+
+The short version of all four:
 
 - A **gate** runs the suite and prints five lines, so that a full run
   costs a few thousand tokens of your context instead of tens of
@@ -286,6 +408,10 @@ The short version of all three:
 - A **sweep** applies one mechanical edit across many tracked files and
   keeps each file's line endings. It ships with the kit. Use it at the
   first edit that touches more than three files.
+- A **hand-off** moves a frame to a fresh session and wakes that session
+  while it waits idle. It ships with the kit. It uses a file and not a
+  message, because a file is addressed by session id, proved by the
+  receiver's own state, and free for a standby that is still waiting.
 
 Until a tool exists, the brief's line that names it is false. Cut that
 line from your brief. Then record what you cut, in a section of
@@ -323,9 +449,10 @@ meta/hooks/
 ```
 
 Keep `meta/agents/` until all three agents are installed. Keep
-`meta/tools/` until you have copied the sweep. Keep `meta/CONTRACTS.md`
-until the gate and the map exist. Delete `meta/` itself when all three
-are empty.
+`meta/tools/` until you have copied the sweep and the hand-off. Keep
+`meta/commands/` until you have copied the standby command. Keep
+`meta/CONTRACTS.md` until the gate and the map exist. Delete `meta/`
+itself when all four are empty.
 
 ## How you know the adoption worked
 
@@ -345,6 +472,25 @@ not check.
 6. No prose in the repository names the project this kit came from. An
    absolute path that happens to carry another name is not a breach.
    Keep the true path and say so in one sentence.
+7. A second session is told to stand by, by the slash command or by a
+   paste. It replies with one line and stops. `python tools/handover.py
+   peers` then lists it as free.
+8. The first session hands that peer a frame. The standby wakes with no
+   keystroke, and the sender prints `CONFIRMED`. Time it. The wake was 6
+   seconds on the machine this tool was built on.
+9. Three standbys wait and one frame is handed off. Exactly one wakes.
+   The other two still answer `peers` as free, and neither shows a turn.
+10. With no standby armed, a hand-off exits 5 and writes one file under
+    `.handover/waiting/`. The next session told to stand by takes that
+    frame before it blocks, and the file is gone.
+11. A session that arms no watcher still sees the waiting hand-off, in
+    the hook's line at its first prompt.
+12. `python tools/handover.py peers` names every session that sent a
+    prompt and arms no watcher. The context hook enrols them, so this
+    line proves the hook writes `.handover/sessions/`.
+13. A claim that its receiver never takes comes back. Hand a frame to a
+    standby, do not run the take, wait fifteen minutes, and run `peers`.
+    It prints `RECLAIMED` and the frame waits as a vacancy again.
 
 ## The one rule that makes the rest work
 

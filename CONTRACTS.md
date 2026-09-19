@@ -1,16 +1,19 @@
-# The three tools
+# The four tools
 
-The kit ships the sweep and describes the gate and the map. A gate welds
-to a test runner and a map welds to a language, so a copied one would
-carry another project's shape into yours. The sweep welds to neither,
-because it reads bytes.
+The kit ships the sweep and the hand-off, and it describes the gate and
+the map. A gate welds to a test runner and a map welds to a language, so a
+copied one would carry another project's shape into yours. The sweep welds
+to neither, because it reads bytes. The hand-off welds to neither, because
+it moves files and watches a clock.
 
 This file states what each tool must do and when to build it. Build the
 gate and the map on their own triggers, and not before.
 
-Every one of the three exists for the same reason: the assistant's
-context is the scarce resource, and each tool turns a large amount of
-output into a small amount of output.
+Three of the four exist for the same reason: the assistant's context is
+the scarce resource, and each tool turns a large amount of output into a
+small amount of output. The hand-off exists to protect the same resource
+in another session: it lets a reserve session wait for hours and spend
+nothing.
 
 Keep this file until the gate and the map exist. Delete it then.
 
@@ -132,3 +135,101 @@ Windows, which rewrites a whole file and hides the real change.
 **The rule that goes in the briefs.** A change that is the same edit in
 more than three files is a script, and the script runs through the
 sweep. Read the diff once, for the judgement cases only.
+
+## The hand-off
+
+**What it is.** One command that moves a frame from a full session to a
+fresh one. It lands while the fresh session sits idle at its prompt.
+
+**It ships with the kit**, at `meta/tools/handover.py`, with 38 tests.
+Copy both, and copy `meta/commands/standby.md` with them. The enrolment
+in requirement 14 lives in `meta/hooks/context_count.py`, so copy that
+too. The list below is what it already does, kept so that a port to
+another language has a specification.
+
+**The trigger to use it.** Use it at the first day two sessions run on
+one project. Before that, copy it anyway, because the day it matters is
+the day you have no context left to write it.
+
+**Why it exists.** Not because messages fail to arrive. They arrive. In
+one machine's history 248 cross-session messages were enqueued and none
+was lost. Of those, 57 landed in sessions idle for over five minutes.
+They drained in a median of 0.010 seconds, one across 35.8 hours of idle.
+Read those numbers before you build anything here. The first version of
+this contract said the opposite, and it was wrong.
+
+A message fails at three other things, each measured in that same
+history. It cannot be addressed: a peer is addressed by a name, the name
+is recycled between sessions, and the Principal names a session id that
+no peer list shows. It cannot be proved. Four sends to a listed but closed
+session returned success and reached nobody. One receiver woke in 68
+milliseconds after 15.7 hours, then spent its whole turn on a usage-limit
+notice. It is not free. A liveness probe spends the clean context
+that made the standby worth handing to. One probed standby answered in
+one line, then read the git log and the stack unprompted.
+
+Two cases defeat a message outright. A session that was never prompted
+holds no transcript and nothing can reach it. A session parked mid-turn on
+a tool decision or a dialog does not drain its queue at all. One such
+session held messages for six hours.
+
+A file and a process do arrive. A standby blocks a background process on
+a claim file. The sender writes the file. The process exits, and the
+harness wakes the standby, because a background task that exits
+re-invokes its session. Measured on Windows 10 with harness 2.1.258: the
+wake came 6 seconds after an outside process wrote the file, and the
+waiting before it cost the standby no tokens.
+
+**What it must do.**
+
+1. Register a standby, then block. The blocking must cost the model
+   nothing. A process waits. A model that polls on a timer spends its
+   context, and its context is the asset being protected.
+2. Write a heartbeat while it blocks, so liveness is a fact on disk and
+   not a question sent to a session that cannot answer.
+3. Wake exactly one standby per hand-off. The others must not learn that
+   a hand-off happened, so that their context stays clean.
+4. Arbitrate two senders that hand off in the same second. An exclusive
+   create gives one winner. A sender that loses the race moves to the
+   next standby.
+5. Never report success on its own write. Wait for the receiver's own
+   state to say it holds the frame, and return a distinct exit code when
+   that never comes.
+6. Survive a drought. A hand-off that finds no standby waits on disk. The
+   next session to arm takes it before it blocks. A rename makes that
+   take atomic.
+7. Tell a session that arms nothing. A session started for other work
+   must still learn that a hand-off waits. So the notice rides on the
+   context hook that every session fires.
+8. Return a distinct exit code for each of: took the frame, claim unread,
+   no standby, left the reserve. The caller writes a status line from the
+   code and never from a guess.
+9. Make the take a receipt. The receiver moves the claim out of the
+   mailbox in one step. So a take cannot happen twice, and a reclaim
+   cannot race a session that is already working.
+10. Give an unread claim back. A session can wake and fail to act. It
+    was observed twice, both times a usage limit. So a claim with no
+    receipt returns to the queue as a vacancy on a clock.
+11. Refuse to make a working session a standby. A session that holds a
+    frame must not rejoin the reserve, or it is handed a second frame.
+12. Find one mailbox from anywhere in the checkout. `--show-toplevel`
+    answers a worktree, and the brief reviews a diff in a worktree, so a
+    second reserve appears there that no sender can see.
+13. Time every deadline on a monotonic clock. A wall-clock step must not
+    end a wait or extend it.
+14. Enrol a session at no cost. The context hook writes the session id,
+    the peer name and the context estimate on every prompt. So a session
+    that arms no watcher is still reachable by a message. The sender can
+    also prefer the cleanest standby.
+
+**The rule that goes in the briefs.** Hand a frame off with the command,
+and write the status line from its exit code. A message is never the first
+route and never the only route. Resuming a sub-agent by message is a
+different thing and stays as it is.
+
+**The degraded path.** A harness with no background process that outlives
+a turn cannot be woken. Then a standby is not possible, and the hand-off
+becomes a vacancy that waits for the next session to start: keep the
+`hand` and `take` commands, keep the hook notice, and cut the standby
+section from the brief. The frame still moves, and it moves when a person
+opens a window instead of within seconds.

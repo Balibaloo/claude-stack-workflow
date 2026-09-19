@@ -1,3 +1,6 @@
 __pycache__/
 *.pyc
 .pytest_cache/
+
+# the hand-off mailbox is machine state, never a record
+.handover/
