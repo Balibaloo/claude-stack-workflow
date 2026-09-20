@@ -45,6 +45,23 @@ Nothing here replaces a record. `plans/` is yours and this kit never
 touches it. The five artifacts are yours too, and the edits below are
 paragraph edits, never file copies.
 
+Take the substance and keep your own wording. A project that has run this
+workflow for weeks has written rules in its own words, and some of them
+say what the kit says. Where the two agree in substance and differ in
+wording, keep yours. Report every such place in the frame, so the two
+repositories stay readable against each other and neither pretends to be
+the other. One destination reached that rule on its own and named the
+commit where its wording lives, which is the part that makes it work: a
+later reader can see that the two texts are one rule.
+
+Take the release the Principal ruled, and not the head. A shallow clone
+gives you the head, so if the ruling names commits and the head has moved
+past them, clone with history and check out the ruled commit. If a defect
+fix sits outside the ruling and you want its protection anyway, guard
+against the defect in your own port rather than widening what the
+Principal ruled. One destination did exactly that, and wrote the guard
+into its frame.
+
 Do the steps in this order. The order matters, because step 1 stops step
 3 from parking a session.
 
