@@ -454,6 +454,16 @@ def test_the_translation_matches_the_frozen_reference(glob):
     therefore frozen in `glob_reference.json` and compared here, so 3.12
     runs all 1122 comparisons.
 
+    If you compare another implementation against this table and the
+    disagreements are all one-directional and include a trivial case such
+    as `*.py` against `a.py`, suspect the comparison and not the
+    implementation. A destination reported 30 and then 171 disagreements
+    from two harness faults: the table's top level is `paths` and
+    `expected` and not a pattern map, and its own matcher took
+    (path, pattern) where this one takes (pattern, path). Its third run,
+    with the harness fixed, disagreed on 5 of 1122 and every one was a
+    real defect in its own port.
+
     Regenerate the table on an interpreter that has `full_match`:
 
         python -c "import sys,json,pathlib; sys.path.insert(0,'tools');             import test_sweep as t; from pathlib import PurePosixPath as P;             d=json.loads(pathlib.Path('tools/glob_reference.json').read_text());             d['generated_on']=sys.version.split()[0]; d['paths']=t.PATHS;             d['expected']={g:[p for p in t.PATHS if P(p).full_match(g)] for g in t.GLOBS};             pathlib.Path('tools/glob_reference.json').write_text(json.dumps(d,indent=1)+chr(10))"

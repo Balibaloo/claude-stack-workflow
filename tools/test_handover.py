@@ -81,6 +81,20 @@ def claim(box_path, sid):
     return box_path / handover.BOX / "claims" / (sid + ".json")
 
 
+def age_the_arm(box_path, sid, seconds):
+    """Move a registration back in time, so a scene reads as it would live.
+
+    A reclaim evicts a registration only when it predates the claim, so a
+    test that ages a claim must age the arm that saw it too. Otherwise the
+    scene says a watcher armed after a claim it demonstrably answered.
+    """
+    api = handover.Box(box_path)
+    state = api.read_state(sid)
+    state["armed_at"] = time.time() - seconds
+    state["since"] = state["armed_at"]
+    api.write_state(sid, state)
+
+
 def arm(box_path, sid, name="peer", wait=10.0):
     """Arm a standby in a thread, and return a handle that carries its exit code."""
     result = {}
@@ -417,6 +431,7 @@ def test_an_unread_claim_returns_to_the_queue(box, capsys):
     stale_claim = json.loads(path.read_text(encoding="utf-8"))
     stale_claim["t"] = time.time() - 3600
     path.write_text(json.dumps(stale_claim), encoding="utf-8")
+    age_the_arm(box, "aaaa1111", 7200)   # the watcher armed before the claim
     capsys.readouterr()
 
     run(box, "peers", "--reclaim", "60")
@@ -442,6 +457,7 @@ def test_a_reclaim_does_not_offer_the_dead_watcher_again(box):
     aged = json.loads(path.read_text(encoding="utf-8"))
     aged["t"] = time.time() - 3600
     path.write_text(json.dumps(aged), encoding="utf-8")
+    age_the_arm(box, "aaaa1111", 7200)   # the watcher armed before the claim
 
     api = handover.Box(box)
     assert len(api.reclaim(60)) == 1
@@ -618,6 +634,68 @@ def test_drop_cancels_a_vacancy(box, capsys):
               (box / handover.BOX / "log.jsonl").read_text(
                   encoding="utf-8").splitlines()]
     assert "vacancy_dropped" in events
+
+
+def test_a_re_armed_watcher_takes_an_unread_claim_at_once(box):
+    """Why the feared case does not arise, recorded so nobody re-argues it.
+
+    A watcher times out, a claim lands while nothing is blocking, and the
+    session re-arms as it is told to. The fear was that the reclaim would
+    later evict that healthy session. It cannot: the new watcher reads the
+    waiting claim on its first poll and exits, so the claim is gone long
+    before any reclaim clock runs out. The self-heal is the defence, and
+    the guard below is only the belt.
+    """
+    api = handover.Box(box)
+    _write_json(api.claim_file("aaaa1111"),
+                {"frame": "7", "commit": "abc1234", "from_sid": "ffff9999",
+                 "t": time.time() - 3600, "iso": "an hour ago"})
+
+    thread, result = arm(box, "aaaa1111", wait=10)
+    thread.join(timeout=5)
+    assert result.get("code") == 0, "the re-armed watcher woke on the old claim"
+    assert run(box, "take", "--sid", "aaaa1111") == 0
+    assert peer(box, "aaaa1111")["frame"] == "7"
+
+
+def test_a_reclaim_evicts_only_a_registration_older_than_the_claim(box):
+    """The eviction checks the assumption its comment used to assert.
+
+    Evicting says "the watcher that was blocking saw this claim and
+    exited". That holds only when the registration predates the claim. A
+    newer registration belongs to a watcher that never saw it.
+    """
+    api = handover.Box(box)
+    now = time.time()
+
+    def scene(sid, armed_at):
+        api.write_state(sid, {"sid": sid, "since": armed_at, "since_iso": "then",
+                              "armed_at": armed_at, "beat": armed_at,
+                              "state": "standby", "frame": None})
+        _write_json(api.claim_file(sid),
+                    {"frame": "7", "commit": "abc1234", "t": now - 3600,
+                     "iso": "an hour ago"})
+
+    scene("aaaa1111", now - 7200)      # armed before the claim: spent
+    scene("bbbb2222", now - 60)        # armed after it: a live watcher's seat
+    assert len(api.reclaim(60)) == 2, "both frames go back to the queue"
+    assert not api.peer_file("aaaa1111").exists()
+    assert api.peer_file("bbbb2222").exists(), "the newer registration survived"
+
+
+def test_a_newer_watcher_retires_the_older_one(box):
+    """One session, one watcher. Two would race for one claim."""
+    first, first_result = arm(box, "aaaa1111", wait=10)
+    time.sleep(0.05)
+    second, second_result = arm(box, "aaaa1111", wait=10)
+
+    first.join(timeout=5)
+    assert first_result.get("code") == 1, "the older watcher stood down"
+    assert second.is_alive(), "the newer one kept the seat"
+    assert handover.Box(box).peer_file("aaaa1111").exists()
+
+    run(box, "release", "--sid", "aaaa1111")
+    second.join(timeout=5)
 
 
 def test_the_hook_name_beats_the_typed_name(box):

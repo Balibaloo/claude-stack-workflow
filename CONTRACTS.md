@@ -142,7 +142,7 @@ sweep. Read the diff once, for the judgement cases only.
 **What it is.** One command that moves a frame from a full session to a
 fresh one. It lands while the fresh session sits idle at its prompt.
 
-**It ships with the kit**, at `meta/tools/handover.py`, with 42 tests.
+**It ships with the kit**, at `meta/tools/handover.py`, with 45 tests.
 Copy both, and copy `meta/commands/standby.md` with them. The enrolment
 in requirement 17 lives in `meta/hooks/context_count.py`, so copy that
 too. The list below is what it already does, kept so that a port to

@@ -416,15 +416,22 @@ class Box:
                 os.unlink(staging)
             except OSError:
                 pass
-            # Its watcher saw this claim and exited, so that session is not
-            # waiting for anything any more. Its heartbeat can still look
-            # fresh, and a sender would then hand the frame to a session
-            # that nothing is watching. Take it out of the reserve, and let
-            # it arm again if it is still alive.
-            try:
-                self.peer_file(sid).unlink()
-            except FileNotFoundError:
-                pass
+            # The watcher that was blocking when this claim arrived saw it
+            # and exited, so that registration is waiting for nothing and a
+            # sender must not be offered it. But a session that timed out,
+            # re-armed, and is blocking again owns a NEWER registration, and
+            # that one is alive. Evicting it would tell a healthy standby to
+            # leave the reserve and never come back. So the registration
+            # goes only when it predates the claim.
+            armed_at = float(state.get("armed_at", 0) or 0)
+            if armed_at <= float(claim.get("t", 0)):
+                try:
+                    self.peer_file(sid).unlink()
+                except FileNotFoundError:
+                    pass
+            else:
+                self.note("reclaim_kept_newer_watcher", sid=sid,
+                          armed_at=armed_at, claim_t=claim.get("t"))
             self.note("reclaimed", sid=sid, frame=claim.get("frame"),
                       after=round(now - float(claim.get("t", now))))
             back.append(claim)
@@ -587,6 +594,11 @@ def cmd_standby(args: argparse.Namespace, box: Box) -> int:
         "watcher_pid": os.getpid(),
         "since": t,
         "since_iso": iso,
+        # `since` keeps the queue order across a re-arm. `armed_at` is this
+        # watcher's own start, and it decides two things a heartbeat cannot:
+        # which of two watchers for one session is the newer, and whether a
+        # registration predates the claim a reclaim is giving back.
+        "armed_at": t,
         "beat": t,
         "state": "standby",
         "frame": None,
@@ -634,9 +646,20 @@ def cmd_standby(args: argparse.Namespace, box: Box) -> int:
             return 1
         if time.monotonic() - last_beat >= args.beat:
             last_beat = time.monotonic()
-            state["beat"] = time.time()
+            # Read before writing, so the beat updates one field and never
+            # restores this watcher's own view of the rest. That is what
+            # lets a newer watcher be seen here at all.
+            current = box.read_state(args.sid)
+            if current and float(current.get("armed_at", 0) or 0) > state["armed_at"]:
+                box.note("watcher_retired", sid=args.sid,
+                         mine=state["armed_at"], newer=current.get("armed_at"))
+                print("a newer watcher arms this session, so this one stops.")
+                print("One session, one watcher. Do not arm again from here.")
+                return 1
+            merged = current or state
+            merged["beat"] = time.time()
             try:
-                box.write_state(args.sid, state)
+                box.write_state(args.sid, merged)
             except OSError:
                 pass
             # A vacancy can appear while this standby is already waiting,
