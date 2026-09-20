@@ -491,9 +491,23 @@ not check.
    frame's heading.
 4. The adoption frame from step 0 closes with a dated status line, the
    actual beside the estimate, and a commit.
-5. No installed file holds a `{{slot}}`, a stray tag, or a link to a
-   file that does not exist. Grep for `{{` and check every markdown link
-   in `CLAUDE.md`.
+5. No INSTALLED file holds a `{{slot}}`, a stray tag, or a link to a
+   file that does not exist. Scope the grep, because `meta/` is full of
+   slots on purpose and a bare grep reads as a failure:
+
+   ```
+   grep -rn "{{" --exclude-dir=meta --exclude-dir=.git .
+   ```
+
+   Then check every markdown link in `CLAUDE.md`. A template keeps its
+   slots until it is copied and filled, so `meta/agents/` holding 25 of
+   them is the kit working. One destination read a bare grep as this line
+   failing since its adoption day, and it had installed no agent at all.
+
+   This is the cheapest line here and the one worth running twice. It
+   costs one command and it catches the defect that a session obeys
+   literally: an installed file is an instruction, and a slot in one is a
+   session told to run `{{interpreter}}`.
 6. No prose in the repository names the project this kit came from. An
    absolute path that happens to carry another name is not a breach.
    Keep the true path and say so in one sentence.

@@ -119,11 +119,17 @@ The context hook enrols every session that sends a prompt, in
 session the Principal only pasted into is still reachable by a message,
 and `peers` can show which standby is the cleanest. An unread claim
 returns to the queue as a vacancy after fifteen minutes. So a session
-that wakes and cannot act does not hold a frame still. The mechanism is
-proved, and the fifteen minute value is not: a destination proved
-RECLAIMED with the clock shortened to three seconds, so nothing yet has
-waited out the default on real work. (observed: a destination's
-acceptance run, 2026-09-20)
+that wakes and cannot act does not hold a frame still. The default was
+waited out at 15.0 minutes exactly, polled every minute from +1, silent
+through +14, and reporting RECLAIMED with the frame back as a vacancy at
++15. (observed: a destination's isolated run, 2026-09-20)
+
+What that run proves and what it does not. The receiver was synthetic: a
+standby that armed with no session behind it to take the claim. So the
+timer and the requeue are proved, and the case the rule exists for is
+not, which is a real session that takes a claim, dies mid-frame and
+leaves it. The two differ in whether the peer file keeps beating.
+(observed: the same run, and named by the session that ran it)
 
 Two facts about the harness decide the whole mechanism. Both were read
 from one machine's own transcripts, and both should be re-read on yours
