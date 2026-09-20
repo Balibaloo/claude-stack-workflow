@@ -24,7 +24,9 @@ Three hazards are the reason it exists:
   default, so a backslash stays a backslash. That hazard was measured at
   23 strikes before this tool existed.
 * `fnmatch` lets `*` cross a separator, treats `**` as two stars, and folds
-  case on Windows. Selection uses `PurePosixPath.full_match`.
+  case on Windows. Selection uses a translation of the glob to a regex,
+  written here because `PurePath.full_match` needs Python 3.13 and a kit
+  that says "Python 3" must run on less. Measured on 3.11, 3.12 and 3.14.
 
 Exit codes, no overlap: 0 when at least one file changed and nothing was
 skipped, 1 when nothing changed and nothing was skipped, 2 for a usage
@@ -41,9 +43,92 @@ import subprocess
 import sys
 from collections.abc import Callable
 from dataclasses import dataclass
+from functools import lru_cache
 from pathlib import Path, PurePosixPath
 
 BOM = codecs.BOM_UTF8
+
+def _segment(seg: str) -> str:
+    """One path segment of a glob, as a regex that never crosses a separator."""
+    out: list[str] = []
+    i, n = 0, len(seg)
+    while i < n:
+        ch = seg[i]
+        if ch == "*":
+            out.append("[^/]*")
+            i += 1
+        elif ch == "?":
+            out.append("[^/]")
+            i += 1
+        elif ch == "[":
+            j = i + 1
+            if j < n and seg[j] in "!^":
+                j += 1
+            if j < n and seg[j] == "]":       # a ] first in the class is a literal
+                j += 1
+            while j < n and seg[j] != "]":
+                j += 1
+            if j >= n:                        # unterminated, so it is a literal [
+                out.append(re.escape(ch))
+                i += 1
+            else:
+                body = seg[i + 1:j]
+                if body.startswith("!"):
+                    body = "^" + body[1:]
+                out.append("[" + body.replace("\\", "\\\\") + "]")
+                i = j + 1
+        else:
+            out.append(re.escape(ch))
+            i += 1
+    return "".join(out)
+
+
+@lru_cache(maxsize=512)
+def _matcher(pattern: str) -> re.Pattern[str]:
+    r"""Compile one glob into a whole-path regex, with `**` across segments.
+
+    `PurePath.full_match` does this, and Python 3.13 added it. A kit that
+    says "Python 3" and needs 3.13 is a kit that breaks on arrival: on
+    3.12 the call raises AttributeError, and 20 of this file's 25 tests
+    failed that way in a destination repository. So the translation lives
+    here, and `test_sweep.py` checks it against `full_match` itself on
+    every interpreter new enough to have one.
+
+    Three rules, each taken from what `full_match` does and not from what
+    a glob usually does:
+
+    * A star never crosses a separator, and a `**` inside a larger
+      segment is only a star. `a**b` matches `aXXb` and never `aX/Yb`.
+    * A `**` that is a whole segment matches any number of segments, and
+      zero of them: `a/**/b` matches `a/b`. A `**` at the end needs at
+      least one: `src/**` matches `src/a` and never `src`.
+    * A class and a range work, `!` negates, and nothing folds case.
+    """
+    # `full_match` builds a path from the pattern first, so the pattern
+    # normalises the way a path does: `.` and a doubled separator go, a
+    # trailing separator goes, `..` stays, and a leading separator stays and
+    # then matches no relative path. That normalisation is pathlib's own and
+    # it exists on every version, so it is borrowed rather than rewritten.
+    segs = str(PurePosixPath(pattern)).split("/")
+    out: list[str] = []
+    i, n = 0, len(segs)
+    while i < n:
+        seg = segs[i]
+        if seg == "**":
+            out.append("[^/]+(?:/[^/]+)*" if i == n - 1 else "(?:[^/]+/)*")
+            i += 1
+        else:
+            out.append(_segment(seg))
+            i += 1
+            if i < n:
+                out.append("/")
+    return re.compile("".join(out))
+
+
+def _full_match(pure: PurePosixPath, pattern: str) -> bool:
+    """Whether the whole path matches the glob. A stand-in for `full_match`."""
+    return _matcher(pattern).fullmatch(str(pure)) is not None
+
 
 def _self_rel(root: Path) -> str:
     """This file's path inside the repository, so no sweep rewrites its own rule.
@@ -100,9 +185,9 @@ def select(root: Path, globs: list[str], excludes: list[str]) -> list[str]:
     keep: list[str] = []
     for rel in dict.fromkeys(tracked):      # a conflicted path is listed per stage
         pure = PurePosixPath(rel)
-        if not any(pure.full_match(g) for g in globs):
+        if not any(_full_match(pure, g) for g in globs):
             continue
-        if any(pure.full_match(x) for x in excludes):
+        if any(_full_match(pure, x) for x in excludes):
             continue
         if not (root / rel).is_file():      # a deleted file is still in the index
             continue
@@ -326,7 +411,7 @@ def parser() -> argparse.ArgumentParser:
     ap = argparse.ArgumentParser(prog="python tools/sweep.py",
                                  description="One mechanical edit over many files.")
     ap.add_argument("--glob", action="append", default=[], metavar="PATTERN",
-                    help="select tracked files by full_match, repeatable")
+                    help="select tracked files by a whole-path glob, repeatable")
     ap.add_argument("--exclude", action="append", default=[], metavar="PATTERN",
                     help="drop matched files, applied after the globs")
     ap.add_argument("--pattern", metavar="REGEX", help="the regex to replace")

@@ -15,7 +15,7 @@ from __future__ import annotations
 import codecs
 import os
 import subprocess
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 
 import pytest
 
@@ -390,3 +390,81 @@ def test_a_usage_error_exits_2(tmp_path, argv):
 
     assert sweep.main(argv, root) == 2
     assert (root / "a.py").read_bytes() == ALPHA_LF
+
+
+# ---------------------------------------------------------------------------
+# Glob selection, which is a translation now and not `PurePath.full_match`
+# ---------------------------------------------------------------------------
+
+# Every pattern shape the tool documents, plus the shapes that break a naive
+# translation: a star beside a separator, a `**` inside a larger segment, a
+# class, a range, a negation, and a path holding regex metacharacters.
+GLOBS = [
+    "tests/*.py", "*.py", "**/*.py", "src/**/*.py", "src/**", "**",
+    "a/**/b", "?.py", "[ab].py", "[!ab].py", "[a-c].py", "[]].py",
+    "TESTS/*.PY", "a**b/x", "**/**/*.py", "src/*/x.py", "*", "**.py",
+    "src/**/", "./x.py", "a+b.py", "a(b).py", "a.b|c", "x[.py",
+    "tools/sweep.py", "tools/*.py", "**/test_*.py", "a/*/*/d.py",
+    "[!a]*.py", "*[0-9].py", "s?c/*.py", "**/x", "x/**", "a/**",
+]
+PATHS = [
+    "a.py", "b.py", "c.py", "d.py", "x.py", "x/a.py", "tests/x.py",
+    "tests/sub/x.py", "tests/test_a.py", "src/a.py", "src/a/b.py",
+    "src/a/b/c.py", "src/x.py", "a/b", "a/x/b", "ab/x", "aXXb/x",
+    "aX/Yb/x", "src", "tools/sweep.py", "tools/test_sweep.py",
+    "a+b.py", "a(b).py", "a.b|c", "x[.py", "].py", "a1.py", "a/b/c/d.py",
+    "sxc/a.py", "x", "x/y", "x/y/z", "a/b/c",
+]
+
+
+@pytest.mark.skipif(not hasattr(PurePosixPath, "full_match"),
+                    reason="no reference implementation before Python 3.13")
+@pytest.mark.parametrize("glob", GLOBS)
+def test_the_translation_agrees_with_full_match(glob):
+    """The translator must answer exactly what `PurePath.full_match` answers.
+
+    This is the whole specification. `full_match` arrived in Python 3.13
+    and the kit must run on less, so the translation carries the
+    behaviour. Where an interpreter has the reference, every case is
+    compared against it, and a disagreement is a defect in the
+    translation and never a new opinion about globs.
+    """
+    for path in PATHS:
+        pure = PurePosixPath(path)
+        assert sweep._full_match(pure, glob) == pure.full_match(glob), (
+            f"{glob!r} against {path!r}")
+
+
+@pytest.mark.parametrize("glob,path,expected", [
+    ("tests/*.py", "tests/x.py", True),
+    ("tests/*.py", "tests/sub/x.py", False),    # a star never crosses a /
+    ("**/*.py", "a.py", True),                  # ** matches zero segments
+    ("**/*.py", "src/a/b.py", True),
+    ("a/**/b", "a/b", True),
+    ("a/**/b", "a/x/y/b", True),
+    ("src/**", "src/a.py", True),
+    ("src/**", "src", False),                   # a trailing ** needs a segment
+    ("a**b/x", "aXXb/x", True),
+    ("a**b/x", "aX/Yb/x", False),               # ** inside a segment is a star
+    ("TESTS/*.PY", "tests/x.py", False),        # nothing folds case
+    ("[ab].py", "a.py", True),
+    ("[!ab].py", "c.py", True),
+    ("[a-c].py", "b.py", True),
+    ("[a-c].py", "d.py", False),
+    ("a+b.py", "a+b.py", True),                 # a metacharacter is a literal
+    ("a(b).py", "a(b).py", True),
+    ("a.b|c", "a.b|c", True),
+    ("a.b|c", "aXb|c", False),                  # a dot is a literal dot
+])
+def test_the_documented_glob_rules(glob, path, expected):
+    """The rules the docstring states, checked on every interpreter."""
+    assert sweep._full_match(PurePosixPath(path), glob) is expected
+
+
+def test_a_glob_compiles_once(monkeypatch):
+    """Selection asks per file and per pattern, so the compile is cached."""
+    sweep._matcher.cache_clear()
+    for _ in range(50):
+        sweep._full_match(PurePosixPath("src/a/b.py"), "src/**/*.py")
+    info = sweep._matcher.cache_info()
+    assert info.misses == 1 and info.hits == 49
