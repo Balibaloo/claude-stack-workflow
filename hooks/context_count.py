@@ -2,14 +2,23 @@
 hand-off that waits for a session.
 
 The harness sends a JSON object on stdin with session_id and
-transcript_path. The hook prints one line of additional context:
-the short session id and an estimate of the tokens in the context
-window. The estimate is the transcript bytes since the last compaction,
-scaled by CONTEXT_FACTOR and divided by four. The Principal compares the
-estimate with the count in the UI and tunes CONTEXT_FACTOR in the
-environment. A first calibration gave 0.6: a 1.6 MB transcript against
-about 250k in the UI. That factor is calibrated on transcript style, not
-on one repository, so it should travel. Check it once and tune it.
+transcript_path. The hook prints one line of additional context: the
+short session id and the tokens in the context window.
+
+It is a count and not an estimate wherever the transcript allows one.
+Every assistant turn records its own usage, and the prompt it was given
+is the fresh tokens plus the tokens written to cache plus the tokens read
+from cache. The hook reads the last of those. No factor, nothing to
+calibrate, and a compaction needs no special case, because the turn after
+one is given a smaller prompt and says so.
+
+The byte estimate remains as the fallback, for a transcript that carries
+no usage. Its factor was 0.6 and is 0.65, measured on 2026-09-20 against
+a 4.7 MB transcript whose last turn reported 771,959 tokens. The old
+value read 8 percent low. Reading low is the dangerous direction, because
+the hand-off refuses to give a frame to a session at or past 300k, and a
+session under-reported as 295k is really near 320k. CONTEXT_FACTOR still
+overrides it.
 
 When the hook speaks: on the first prompt of a session, so the wake
 message can report the count, and on every prompt from 200k upward.
@@ -63,13 +72,48 @@ def is_compaction(entry):
     return False
 
 
+def used(entry):
+    """The context an assistant turn actually consumed, from the harness.
+
+    Every assistant turn records its own usage, and the prompt it was
+    given is the sum of the fresh tokens, the tokens written to cache and
+    the tokens read from cache. That is the number the harness itself
+    counted, so reading it beats scaling the transcript's bytes by a
+    constant that nobody has measured lately.
+    """
+    if not isinstance(entry, dict) or entry.get("type") != "assistant":
+        return None
+    usage = (entry.get("message") or {}).get("usage")
+    if not isinstance(usage, dict):
+        return None
+    total = 0
+    for key in ("input_tokens", "cache_creation_input_tokens",
+                "cache_read_input_tokens"):
+        value = usage.get(key)
+        if isinstance(value, (int, float)):
+            total += value
+    return total or None
+
+
 def scan(path):
-    """Return (estimate in thousands of tokens, assistant turns) or None."""
+    """Return (thousands of tokens, assistant turns) or None.
+
+    The count is the last turn's own usage where the transcript records
+    one. A compaction needs no special case there, because the turn after
+    it is given a smaller prompt and says so.
+
+    The byte estimate is the fallback, for a transcript that carries no
+    usage. Its factor was 0.6 and is 0.65, measured on 2026-09-20 against
+    a 4.7 MB transcript whose last turn reported 771,959 tokens: the old
+    value read 8 percent low, and reading low is the dangerous direction
+    for a ceiling that decides whether a session can finish a frame.
+    """
     if not path or not os.path.exists(path):
         return None
-    factor = float(os.environ.get("CONTEXT_FACTOR", "0.6"))
+    factor = float(os.environ.get("CONTEXT_FACTOR", "0.65"))
     total = 0
     turns = 0
+    exact = None
     try:
         with open(path, "rb") as handle:
             for line in handle:
@@ -81,9 +125,14 @@ def scan(path):
                     total = 0
                 if isinstance(entry, dict) and entry.get("type") == "assistant":
                     turns += 1
+                    seen = used(entry)
+                    if seen:
+                        exact = seen
                 total += len(line)
     except OSError:
         return None
+    if exact:
+        return round(exact / 1000), turns
     return round(total * factor / 4 / 1000), turns
 
 

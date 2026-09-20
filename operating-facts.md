@@ -192,6 +192,21 @@ Each one cost a real hand-off.
 Numbers this project should measure once, with the borrowed values from
 the machine the tool was built on:
 
+- The context count is a count, not an estimate. The hook reads the last
+  assistant turn's own usage from the transcript: fresh tokens, plus
+  tokens written to cache, plus tokens read from cache. Where a
+  transcript carries no usage the hook scales its bytes by 0.65, measured
+  on 2026-09-20 against a 4.7 MB transcript whose last turn reported
+  771,959 tokens. The kit shipped 0.6 until then, which read 8 percent
+  low, and low is the dangerous direction for a rule that decides whether
+  a session can finish a frame. (observed: this repository's own
+  transcript, 2026-09-20)
+- One word carries two meanings and stays that way, ruled by the
+  Principal on 2026-09-20. A `claim` is the file a sender writes, and to
+  claim a frame is to write your session id in its heading. A rename
+  would touch about sixty places across the kit and two destinations'
+  records, for an ambiguity that context resolves every time. Recorded so
+  the next reviewer finds the ruling instead of the defect.
 - The wake: the time from the claim file appearing to the standby's first
   turn. 6 seconds, and no longer borrowed. Measured here once, then
   measured twice more in a second project on its first two real hand-offs,
