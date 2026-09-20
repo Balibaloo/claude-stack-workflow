@@ -224,7 +224,12 @@ touches the composition, or the budget is spent.
 
 Records: a conclusion goes to a record when it forms. Every conclusion
 carries a mark, each with a reason the size of a commit headline:
-(observed: where), (reasoned: why), or (ruled: why). Say which workflow
+(observed: where and when), (reasoned: why), or (ruled: why). An
+observation carries its date because an observation ages. A check you ran
+an hour ago and quote now without its date is a prediction wearing the
+word observed, and a prediction never gates. An assertion about what a
+mechanism does is (reasoned) until you have run it, however sound it
+feels. Say which workflow
 a statement is about: the meta workflow, this build session, or
 {{project}}, the thing being built. Five lines per frame: what, ends
 when, waits on, a pointer to the reasoning, a dated status. The status

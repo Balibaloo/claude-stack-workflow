@@ -133,6 +133,27 @@ before anyone writes a rule about them.
   messages for six hours while it waited on a tool decision. A permission
   prompt parks a session the same way. (observed: the same corpus)
 
+Four assertions that felt sound and were never run, all on 2026-09-20,
+in the same week the rule against them was written down. Keep the list.
+The shape repeats and the cost is always a rule that gates.
+
+- "Session messaging did not carry it." Written into a record and a
+  commit message from one hand-off that arrived four minutes late. The
+  message had arrived. (observed: the transcripts, 2026-09-20)
+- "The kit update is not installed in that project." A check run before
+  the update landed, quoted afterwards as current, then broadcast to four
+  sessions as a rule that would have stopped a session at 400k holding a
+  frame it could have handed. The receiving session caught it in minutes.
+  (observed: the peer's reply and the installed commit, 2026-09-20)
+- "That reclaim hazard is reachable from ordinary operation." Asserted
+  from reading the code, then disproved by the first test written for it.
+  A re-armed watcher reads the waiting claim on its first poll.
+  (observed: the failing test, 2026-09-20)
+- "Our two glob implementations disagree on 30 cases, then on 171." Both
+  were faults in the comparison, not in either implementation. The third
+  run, with the harness fixed, found 5 real ones. (observed: a
+  destination's own report, 2026-09-20)
+
 Three things a message cannot do, which is why the hand-off uses a file.
 Each one cost a real hand-off.
 
