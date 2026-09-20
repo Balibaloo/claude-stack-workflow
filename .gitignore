@@ -4,3 +4,6 @@ __pycache__/
 
 # the hand-off mailbox is machine state, never a record
 .handover/
+
+# personal settings for this checkout, never part of the kit
+.claude/settings.local.json
