@@ -103,8 +103,9 @@ only for what the map does not answer.
 **What it is.** One command that applies one mechanical edit across many
 tracked files.
 
-**It ships with the kit**, at `meta/tools/sweep.py`, with 114 tests and a frozen
-reference table in `glob_reference.json`. Copy all three. The list below is what it already does, kept so that a port to
+**It ships with the kit**, at `meta/tools/sweep.py`, with 114 tests and
+a frozen reference table in `meta/tools/glob_reference.json`. Copy all
+three. The list below is what it already does, kept so that a port to
 another language has a specification.
 
 **The trigger to use it.** Use it at the first change that is the same
@@ -143,7 +144,7 @@ fresh one. It lands while the fresh session sits idle at its prompt.
 
 **It ships with the kit**, at `meta/tools/handover.py`, with 42 tests.
 Copy both, and copy `meta/commands/standby.md` with them. The enrolment
-in requirement 14 lives in `meta/hooks/context_count.py`, so copy that
+in requirement 17 lives in `meta/hooks/context_count.py`, so copy that
 too. The list below is what it already does, kept so that a port to
 another language has a specification.
 
