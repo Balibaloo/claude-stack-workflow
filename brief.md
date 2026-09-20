@@ -144,6 +144,14 @@ stack sends a reader to the wrong place.
 Arm one watcher only. Two watchers for one session write two heartbeats
 and race for one claim.
 
+Never spend a standby's context. A standby is not a correspondent, and
+every message you send one takes from the frame it is holding the seat
+for. Do not ask it how it is, do not tell it what changed, and do not
+thank it. One standby went from 20k to 152k in an afternoon, and part of
+that was a peer writing to it about work it was not doing. Report to
+{{principal}} instead. If a standby must know something before it is
+woken, it is not a standby and it is doing work.
+
 On wake:
 
 1. Take any hand-off waiting for you:

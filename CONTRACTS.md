@@ -227,13 +227,23 @@ waiting before it cost the standby no tokens.
     to another project. The mailbox at the repository root makes the
     error impossible, because a sender reads only the reserve of its own
     checkout.
-15. Never print a working session as dead, and never print a stale frame
-    as current. A holder's watcher exits when it delivers the claim, so
-    its heartbeat stops by design and a beat column would read STALE for
-    an hour. The frame column names what the mailbox delivered, and the
-    stack is the record of what a session holds now, so give a command
-    that corrects it. Both were reported from a live frame, where a row
-    contradicted the stack and the file was edited by hand.
+15. Never let a row say something that stopped being true. Three faults
+    in one day were one fault: a row derived from a stored field that no
+    longer matched the world. A holder's watcher exits when it delivers
+    the claim, so its heartbeat stops by design and the beat column read
+    STALE on a session that was working. Clearing a frame wrote
+    "standby" into a row with no watcher, and the same column then read
+    as a session that died. And the frame column named what the mailbox
+    delivered long after that frame closed.
+
+    So derive what you print from a fact you can check when you print it,
+    and where you cannot, name the field for what it actually holds. A
+    claim file on disk makes a row `woken`. A state of holding with no
+    frame makes it `spent`. A beat means nothing for a row whose watcher
+    exited, so that row reads `held`. The column that names a delivered
+    frame is called `handed` and not `frame`, and a command corrects it.
+    All three were reported from live frames, and the third had already
+    been edited by hand because no command existed.
 16. Never ask a session for its own peer name. It cannot know one without
     asking for a peer list, and the message fallback addresses by name,
     so a guess is unaddressable. The hook reads the true name from the
