@@ -26,7 +26,12 @@ Rules:
 6. The session that holds a frame writes the first eight characters of
    its session id in the heading. A popped frame moves verbatim to
    `plans/archive/stack-<date>.md`.
-7. Every conclusion carries a mark with a headline-long reason:
+7. Every frame carries a name of a few words in its heading, and every
+   mention of it carries that name with the number. A number alone is an
+   index into this file, so a reader who meets one has to open the file
+   to learn what it means. That holds in a status line, in a commit
+   message, in a message to a peer, and when you answer the Principal.
+8. Every conclusion carries a mark with a headline-long reason:
    (observed: where), (reasoned: why), or (ruled: why). Say which
    workflow it is about, the meta workflow or the project's own.
 
@@ -73,8 +78,8 @@ your own.
   Total: 350k in agents, about 120k in this context.
 - Waits on: nothing.
 - Reasoning: the grill of 2026-09-17.
-- Status 2026-09-17 14:25 (peer-02): pushed. The scope agent is out,
-  read-only, cap 60k.
+- Status 2026-09-17 14:25 (peer-02): frame 12, the stale index, pushed.
+  The scope agent is out, read-only, cap 60k.
 - Status 2026-09-17 14:52 (peer-02): the scope report is in, 76k on the
   harness line against 50k priced (observed: the harness usage).
 ```

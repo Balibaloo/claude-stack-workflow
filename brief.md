@@ -235,8 +235,12 @@ One unrun claim copied into three records reads as three records
 agreeing, and it is still one claim nobody ran. Say which workflow
 a statement is about: the meta workflow, this build session, or
 {{project}}, the thing being built. Five lines per frame: what, ends
-when, waits on, a pointer to the reasoning, a dated status. The status
-line's time comes from the clock, never from memory. Closed frames leave
+when, waits on, a pointer to the reasoning, a dated status. Every frame
+carries a name of a few words in its heading, and every mention of that
+frame carries the name with the number. "Frame 50" is an index into a
+file. "Frame 50, port the hand-off kit" is a thing {{principal}} can
+answer about without opening anything. The status line's time comes from
+the clock, never from memory. Closed frames leave
 the file. Commit the stack alone after every change. Never edit another
 session's frame, except to add a waits-on line. In the smart zone you
 decide judgement and completion. You write your own instruction files
