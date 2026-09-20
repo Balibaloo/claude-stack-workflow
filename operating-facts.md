@@ -167,6 +167,13 @@ The shape repeats and the cost is always a rule that gates.
   installer down the riskier path, by hand, through four functions.
   (observed: the destination's diff, 2026-09-20)
 
+  This one spread, and the spreading is the lesson. The destination copied
+  the claim into its own `CLAUDE.md` and into a frame, neither of which
+  diffed the file either, and carried it for two days. One unrun claim
+  then had three homes and read as three records agreeing. A destination
+  that repeats an upstream assertion in its own words does not check it by
+  repeating it. (observed: the destination's own report, 2026-09-20)
+
 Three things a message cannot do, which is why the hand-off uses a file.
 Each one cost a real hand-off.
 

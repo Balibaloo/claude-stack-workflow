@@ -229,7 +229,10 @@ observation carries its date because an observation ages. A check you ran
 an hour ago and quote now without its date is a prediction wearing the
 word observed, and a prediction never gates. An assertion about what a
 mechanism does is (reasoned) until you have run it, however sound it
-feels. Say which workflow
+feels. Copying a claim never observes it: a claim you take from another
+record keeps that record's mark and date, and never gains a fresh one.
+One unrun claim copied into three records reads as three records
+agreeing, and it is still one claim nobody ran. Say which workflow
 a statement is about: the meta workflow, this build session, or
 {{project}}, the thing being built. Five lines per frame: what, ends
 when, waits on, a pointer to the reasoning, a dated status. The status

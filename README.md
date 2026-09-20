@@ -113,8 +113,11 @@ Do the steps in this order. The order matters, because step 1 stops step
 
 6. **The command, if your harness has slash commands.** Copy
    `meta/commands/standby.md` to `.claude/commands/standby.md`, replace
-   all four `{{interpreter}}` slots, and delete the comment block it
-   names. The file holds five, and the fifth is inside that block.
+   the `{{interpreter}}` slots. Delete the comment block FIRST, then
+   replace every slot that remains, and check with `grep -c "{{"` that
+   none is left. The file holds five and only four are live, so an
+   installer who counts before deleting replaces four and ships one broken
+   line. One destination avoided that only by deleting first.
    Then a new session joins the reserve with one word instead of a paste.
 
 7. **Prove it, then say so.** Run acceptance lines 7 to 13 at the end of
