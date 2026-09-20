@@ -217,7 +217,16 @@ waiting before it cost the standby no tokens.
     second reserve appears there that no sender can see.
 13. Time every deadline on a monotonic clock. A wall-clock step must not
     end a wait or extend it.
-14. Enrol a session at no cost. The context hook writes the session id,
+14. Scope the reserve to one repository. A peer list is machine-wide, and
+    a session in another project answers a liveness probe truthfully in
+    its own sense. Measured on 2026-09-20: a session probed its peers,
+    two sessions from a different repository answered "clean standby",
+    and a frame was handed to one of them. That session would have read
+    its own `plans/stack.md` and looked for a frame number that belonged
+    to another project. The mailbox at the repository root makes the
+    error impossible, because a sender reads only the reserve of its own
+    checkout.
+15. Enrol a session at no cost. The context hook writes the session id,
     the peer name and the context estimate on every prompt. So a session
     that arms no watcher is still reachable by a message. The sender can
     also prefer the cleanest standby.

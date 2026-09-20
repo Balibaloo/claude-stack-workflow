@@ -99,6 +99,16 @@ A peer's name changes when its session restarts. A session id does not.
 So address a peer by the session id, and record the name only so that a
 person can find the window.
 
+The harness peer list covers the machine and not the project. It shows a
+name and a reference, and never a working directory. A session in another
+repository answers "clean standby" truthfully in its own sense. On
+2026-09-20 a frame from one project was handed to a session working in
+another, and the sender could not have seen the difference. The join it
+needed is `~/.claude/sessions/<pid>.json`, which carries the name, the
+session id and the working directory together. The reserve avoids the
+question: it lives in this checkout, so a sender never sees a session
+from another project.
+
 The reserve lives in `.handover/` at the repository root, and a worktree
 shares the same one. It is machine state, not a record, and `.gitignore`
 holds it. `python tools/handover.py peers` prints it. The record of a

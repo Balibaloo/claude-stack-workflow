@@ -54,8 +54,15 @@ three warnings only:
   `plans/operating-facts.md` carries the measurements.
 
   Use a message only when the command reports 4. Message the peer name
-  the command prints. Tell it to run the take command. Believe the reply
-  only when it names the session id you claimed.
+  the command prints, and no other name. Tell it to run the take command.
+  Believe the reply only when it names the session id you claimed.
+
+  Never pick a peer from the harness peer list. That list is machine-wide
+  and it does not show which repository a session works in. On 2026-09-20
+  a session probed its peers, two sessions from another project answered
+  "clean standby" truthfully in their own sense, and a frame went to one
+  of them. The command reads the reserve of this checkout only, so the
+  name it prints is a session that registered here.
 
   Never write in a record that messaging is broken. It is not. That
   sentence was written once from a hand-off that arrived four minutes
