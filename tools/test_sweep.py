@@ -454,15 +454,22 @@ def test_the_translation_matches_the_frozen_reference(glob):
     therefore frozen in `glob_reference.json` and compared here, so 3.12
     runs all 1122 comparisons.
 
-    If you compare another implementation against this table and the
-    disagreements are all one-directional and include a trivial case such
-    as `*.py` against `a.py`, suspect the comparison and not the
-    implementation. A destination reported 30 and then 171 disagreements
-    from two harness faults: the table's top level is `paths` and
-    `expected` and not a pattern map, and its own matcher took
-    (path, pattern) where this one takes (pattern, path). Its third run,
-    with the harness fixed, disagreed on 5 of 1122 and every one was a
-    real defect in its own port.
+    Check the COUNT before you read the disagreements. This table is 34
+    patterns against 33 paths, which is 1122 comparisons and no other
+    number. A run that reports any other total has misread the table, and
+    every disagreement it names is noise.
+
+    That control matters more than the obvious one. A destination reported
+    30, then 171, then 80 disagreements from three separate harness
+    faults: the table's top level is `paths` and `expected` and not a
+    pattern map, its own matcher took (path, pattern) where this one takes
+    (pattern, path), and `expected[pattern]` is the LIST OF PATHS that
+    match and not a boolean vector aligned to `paths`. On the third fault
+    the trivial cases all passed and the result was still wrong, because a
+    trivial case tests the two matchers and never tests the reading of the
+    table. The count caught what the trivial cases could not. Its fourth
+    run, with the harness right, disagreed on 5 of 1122, and every one was
+    a real defect in its own port.
 
     Regenerate the table on an interpreter that has `full_match`:
 

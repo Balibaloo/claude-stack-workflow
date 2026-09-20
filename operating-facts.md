@@ -119,7 +119,11 @@ The context hook enrols every session that sends a prompt, in
 session the Principal only pasted into is still reachable by a message,
 and `peers` can show which standby is the cleanest. An unread claim
 returns to the queue as a vacancy after fifteen minutes. So a session
-that wakes and cannot act does not hold a frame still.
+that wakes and cannot act does not hold a frame still. The mechanism is
+proved, and the fifteen minute value is not: a destination proved
+RECLAIMED with the clock shortened to three seconds, so nothing yet has
+waited out the default on real work. (observed: a destination's
+acceptance run, 2026-09-20)
 
 Two facts about the harness decide the whole mechanism. Both were read
 from one machine's own transcripts, and both should be re-read on yours
@@ -133,7 +137,7 @@ before anyone writes a rule about them.
   messages for six hours while it waited on a tool decision. A permission
   prompt parks a session the same way. (observed: the same corpus)
 
-Four assertions that felt sound and were never run, all on 2026-09-20,
+Five assertions that felt sound and were never run, all on 2026-09-20,
 in the same week the rule against them was written down. Keep the list.
 The shape repeats and the cost is always a rule that gates.
 
@@ -149,10 +153,19 @@ The shape repeats and the cost is always a rule that gates.
   from reading the code, then disproved by the first test written for it.
   A re-armed watcher reads the waiting claim on its first poll.
   (observed: the failing test, 2026-09-20)
-- "Our two glob implementations disagree on 30 cases, then on 171." Both
-  were faults in the comparison, not in either implementation. The third
-  run, with the harness fixed, found 5 real ones. (observed: a
-  destination's own report, 2026-09-20)
+- "Our two glob implementations disagree on 30 cases, then on 171, then
+  on 80." Three faults in the comparison and none in either
+  implementation. On the third, every trivial case passed and the result
+  was still wrong, because a trivial case tests the matchers and never
+  tests the reading of the table. The comparison count caught it. The
+  fourth run found 5 real ones. (observed: a destination's own report,
+  2026-09-20)
+- "That destination's hook carries local edits, so merge by hand." Written
+  into this kit's own update procedure about a file in a project nobody
+  here had read. The diff removed two upstream lines and nothing local, so
+  the safe move was to replace the file whole. The instruction sent an
+  installer down the riskier path, by hand, through four functions.
+  (observed: the destination's diff, 2026-09-20)
 
 Three things a message cannot do, which is why the hand-off uses a file.
 Each one cost a real hand-off.
@@ -173,13 +186,19 @@ Numbers this project should measure once, with the borrowed values from
 the machine the tool was built on:
 
 - The wake: the time from the claim file appearing to the standby's first
-  turn. 6 seconds. (borrowed)
+  turn. 6 seconds, and no longer borrowed. Measured here once, then
+  measured twice more in a second project on its first two real hand-offs,
+  6 seconds each time. (observed: three projects, 2026-09-20)
 - The cost of waiting: nothing. A process blocks, and the model spends no
   tokens until it wakes. (borrowed)
 - The cost of arming a standby: one command and one line of reply.
   {{measure it, and write the number here}}
-- The cost of a re-arm when the wait runs out: one turn per hour of
-  standby duty by default. {{measure it, then decide the `--wait` value}}
+- The cost of a re-arm when the wait runs out: one turn per standby per
+  `--wait`. At the 28800 default that is one turn per session per eight
+  hours. Observed: two standbys ran out at 10:37 and re-armed four and
+  seven seconds later with no person present, and both were still at
+  about 20k after twelve and a half hours in the reserve. (observed:
+  a destination's hand-off log, 2026-09-20)
 - How long the harness lets a background process live. A heartbeat beat
   150 times over 49.7 minutes here and then ended on its own clock, with
   no interruption, across idle turns and busy ones. The longest gap

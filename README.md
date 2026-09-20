@@ -66,11 +66,23 @@ Do the steps in this order. The order matters, because step 1 stops step
    `meta/tools/test_handover.py` beside your other tests. Run them once:
    38 tests, a few seconds. Add `.handover/` to `.gitignore`.
 
-3. **The hook.** Your `.claude/hooks/context_count.py` is an older copy.
-   Take three things from `meta/hooks/context_count.py` into it, and keep
-   every local change you have made: the `repo_root` function, the `enrol`
-   and `peer_name` functions, and the `waiting` function, plus the four
-   lines in `main` that call them. Then check the hook by hand:
+3. **The hook.** Diff before you merge. Run
+
+   ```
+   git diff --no-index --ignore-cr-at-eol .claude/hooks/context_count.py meta/hooks/context_count.py
+   ```
+
+   and read what it removes. If it removes only lines the new file
+   rewrites, this destination has no local content in that hook and you
+   replace the file whole. Merge by hand only what the diff proves is
+   local. A destination followed an earlier version of this step, which
+   asserted local edits, and merged four functions by hand where the diff
+   showed two upstream lines and nothing else. The riskier path was the
+   one this file told it to take.
+
+   What the new file adds, when you do have to merge: `repo_root`,
+   `enrol`, `peer_name`, `waiting`, and the four lines in `main` that
+   call them. Then check the hook by hand:
 
    ```
    echo '{"session_id":"test1234","transcript_path":"","cwd":"<this repo>"}' | python .claude/hooks/context_count.py
@@ -101,7 +113,8 @@ Do the steps in this order. The order matters, because step 1 stops step
 
 6. **The command, if your harness has slash commands.** Copy
    `meta/commands/standby.md` to `.claude/commands/standby.md`, replace
-   both `{{interpreter}}` slots, and delete the comment block it names.
+   all four `{{interpreter}}` slots, and delete the comment block it
+   names. The file holds five, and the fifth is inside that block.
    Then a new session joins the reserve with one word instead of a paste.
 
 7. **Prove it, then say so.** Run acceptance lines 7 to 13 at the end of
@@ -482,7 +495,10 @@ not check.
    The other two still answer `peers` as free, and neither shows a turn.
 10. With no standby armed, a hand-off exits 5 and writes one file under
     `.handover/waiting/`. The next session told to stand by takes that
-    frame before it blocks, and the file is gone.
+    frame before it blocks, and the file is gone. Release or wait out
+    every standby first, and check that `peers` reads zero free. A
+    destination ran this line with two standbys still armed, and a frame
+    number that does not exist woke a live session and cost it a turn.
 11. A session that arms no watcher still sees the waiting hand-off, in
     the hook's line at its first prompt.
 12. `python tools/handover.py peers` names every session that sent a
