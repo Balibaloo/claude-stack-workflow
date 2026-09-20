@@ -44,9 +44,11 @@ three warnings only:
   - 4: the claim waits unread. Name that session in the status line, and
     say the take never came. The claim returns to the queue by itself, so
     the frame moves again without a person. Stop.
-  - 5: the reserve is empty. The hand-off now waits on disk for the next
-    standby. Say in the status line that the frame is handed to nobody
-    yet. Tell {{principal}} the reserve is empty. Stop.
+  - 5: no standby can take it. The hand-off now waits on disk for the
+    next one. Say in the status line that the frame is handed to nobody
+    yet. Read the command's own output before you tell {{principal}} why:
+    an empty reserve and a reserve that is all past the ceiling are
+    different facts and need different windows. Stop.
 
   A message is never the first route and never the only route. A message
   does arrive, and fast. It still cannot carry a session id, cannot prove
@@ -118,6 +120,11 @@ seconds. It costs you no tokens while it blocks. The harness wakes you
 when the process exits, because a background task that exits re-invokes
 its session. That wake was measured at 6 seconds after the claim
 appeared.
+
+The command refuses to arm you if you read at or past 300k, and it takes
+your seat back. A session there takes no new frame, so it would be handed
+none, and a seat it holds is a seat nothing can use. Tell {{principal}}
+that a window is needed, and do not arm again.
 
 Answer no permission prompt while you arm. A prompt parks the session
 mid-turn, and a parked session drains nothing, so it can never be woken.

@@ -742,6 +742,73 @@ def test_a_standby_that_really_died_still_reads_stale(box):
     assert run(box, "peers") == 1
 
 
+def enrol(box_path, sid, est):
+    """Write what the context hook writes, so a row carries an estimate."""
+    api = handover.Box(box_path)
+    _write_json(api.sessions / (sid + ".json"),
+                {"sid": sid, "name": "peer-" + sid[:4], "est": est,
+                 "turns": 1, "t": time.time()})
+
+
+def test_a_frame_goes_to_the_oldest_standby_under_the_ceiling(box):
+    """Use a session up before spending a fresh one, but never past 300k."""
+    arm(box, "aaaa1111")          # oldest, and too full to finish a frame
+    time.sleep(0.05)
+    arm(box, "bbbb2222")          # next oldest, and able to
+    time.sleep(0.05)
+    arm(box, "cccc3333")          # freshest, and should stay unspent
+    enrol(box, "aaaa1111", 340)
+    enrol(box, "bbbb2222", 210)
+    enrol(box, "cccc3333", 20)
+
+    assert run(box, "hand", "--frame", "7", "--commit", "abc1234",
+               "--confirm", "0.1") == 4
+    claims = sorted(p.stem for p in (box / handover.BOX / "claims").glob("*.json"))
+    assert claims == ["bbbb2222"], \
+        "the oldest one under the ceiling took it, not the oldest and not the cleanest"
+
+
+def test_an_unknown_estimate_is_the_cleanest_standby_there_is(box):
+    """A window armed on its first prompt has no transcript to measure yet.
+
+    It stays unmeasured for as long as it sits quiet, so unknown is the
+    normal state of the best seat in the reserve. Observed in the wild:
+    a live session enrolled with est null and turns zero.
+    """
+    arm(box, "aaaa1111")
+    enrol(box, "aaaa1111", None)
+    row = [r for r in handover.Box(box).queue(handover.STALE)
+           if r["sid"] == "aaaa1111"][0]
+    assert row["over"] is False and row["free"] is True
+    assert run(box, "hand", "--frame", "7", "--commit", "abc1234",
+               "--confirm", "0.1") == 4
+
+
+def test_a_reserve_that_is_all_too_full_is_a_drought(box, capsys):
+    """And it must not read as an empty reserve, which is a different fact."""
+    arm(box, "aaaa1111")
+    enrol(box, "aaaa1111", 340)
+    capsys.readouterr()
+
+    assert run(box, "hand", "--frame", "7", "--commit", "abc1234") == 5
+    out = capsys.readouterr().out
+    assert "over the 300k ceiling" in out
+    assert "aaaa1111 at 340k" in out
+    assert "not an empty reserve" in out
+    assert len(vacancies(box)) == 1, "the frame waits for a fresh window"
+
+
+def test_a_session_past_the_ceiling_leaves_instead_of_arming(box, capsys):
+    """A seat it holds is a seat no hand-off can use."""
+    enrol(box, "dddd4444", 355)
+    capsys.readouterr()
+    assert run(box, "standby", "--sid", "dddd4444", "--wait", "1") == 2
+    out = capsys.readouterr().out
+    assert "past the 300k ceiling" in out
+    assert "left the reserve" in out
+    assert not (box / handover.BOX / "peers" / "dddd4444.json").exists()
+
+
 def test_the_hook_name_beats_the_typed_name(box):
     """A session cannot know its own peer name, so its guess must not win.
 

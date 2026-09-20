@@ -244,11 +244,22 @@ waiting before it cost the standby no tokens.
     frame is called `handed` and not `frame`, and a command corrects it.
     All three were reported from live frames, and the third had already
     been edited by hand because no command existed.
-16. Never ask a session for its own peer name. It cannot know one without
+16. Hand to the oldest session that can finish the frame. Oldest first
+    spends one session before it spends a fresh one, which keeps the
+    number of open windows down. A ceiling keeps that from handing a
+    frame to a session that must stop mid-frame, and the brief already
+    names the number: a session at 300k takes no new frame, so it is
+    handed none. A session past the ceiling leaves the reserve instead
+    of arming, because a seat nothing can use makes the reserve read
+    larger than it is. An unknown estimate is eligible: a window armed
+    on its first prompt has no transcript to measure and stays that way
+    while it sits quiet, so unknown is the cleanest seat there is and
+    never a risk.
+17. Never ask a session for its own peer name. It cannot know one without
     asking for a peer list, and the message fallback addresses by name,
     so a guess is unaddressable. The hook reads the true name from the
     harness registry, and the hook wins over anything typed.
-17. Enrol a session at no cost. The context hook writes the session id,
+18. Enrol a session at no cost. The context hook writes the session id,
     the peer name and the context estimate on every prompt. So a session
     that arms no watcher is still reachable by a message. The sender can
     also prefer the cleanest standby.

@@ -13,9 +13,8 @@ sessions on one stack write over each other's records, and the stack
 stops answering "where are we". A frame that needs a session while you
 are not full is pushed and named to the Principal, who assigns it.
 
-A session at 400k must give its frame to a fresh peer and stop. A message
-is not how it does that, and the reason is not that messages fail to
-arrive. They arrive. Across 248 cross-session messages in one machine's
+A message is not how it does that, and the reason is not that messages
+fail to arrive. They arrive. Across 248 cross-session messages in one machine's
 history, none was ever lost, and 57 that landed in sessions idle for more
 than five minutes drained in a median of 0.010 seconds. One bridged 35.8
 hours of idle in 0.325 seconds.
@@ -128,7 +127,8 @@ Exit codes, no overlap.
     standby  0 a claim arrived and is printed, 1 the registration was
              removed so this session must not arm again, 3 the wait ran
              out and the session arms again, 2 a usage error, a bad
-             session id, or a session that already holds a frame.
+             session id, a session that already holds a frame, or a
+             session past the ceiling, which leaves the reserve.
     peers    0 at least one free standby waits, 1 none does,
              2 a usage error.
     hand     0 a standby took the frame, 4 the claim is posted and the
@@ -170,6 +170,7 @@ WAIT = 28800.0
 CONFIRM = 90.0
 RECLAIM = 900.0
 GRACE = 25.0
+CEILING = 300      # thousands of tokens, the brief's take-no-new-frame line
 POLL = 1.0
 VERSION = 2
 
@@ -355,7 +356,7 @@ class Box:
         out.sort(key=lambda p: float(p.get("t", 0)))
         return out
 
-    def queue(self, stale: float) -> list[dict]:
+    def queue(self, stale: float, ceiling: float = CEILING) -> list[dict]:
         """Every peer, oldest first, each row carrying its heartbeat age.
 
         A peer with a claim it has not taken is `woken`, and it is not
@@ -377,8 +378,10 @@ class Box:
             state["live"] = -stale <= state["age"] <= stale
             state["ahead"] = state["age"] < -1.0
             state["claimed"] = self.claim_file(sid).exists()
-            state["free"] = (state["live"] and not state["claimed"]
-                             and state.get("state") == "standby")
+            # Read the enrolment before anything derived from it. The
+            # ceiling below is computed from `est`, and an earlier version
+            # of this loop read `est` one line too soon, so every row was
+            # eligible however full it was.
             enrolled = self.enrolled(sid) or {}
             state["est"] = enrolled.get("est")
             # The hook reads the name from the harness registry. A session
@@ -386,6 +389,17 @@ class Box:
             # so a name typed at arm time is a guess, and a wrong name is
             # unaddressable on the one route that needs it. The hook wins.
             state["name"] = enrolled.get("name") or state.get("name") or ""
+            # A session at the brief's 300k line must take no new frame, so
+            # it must not be handed one either. An unknown estimate is the
+            # normal state of the cleanest standby there is: a window armed
+            # on its first prompt has no transcript to measure yet, and it
+            # stays unmeasured for as long as it sits quiet. So unknown is
+            # eligible, and it is not a risk, it is a new window.
+            est = state["est"]
+            state["over"] = isinstance(est, (int, float)) and est >= ceiling
+            state["free"] = (state["live"] and not state["claimed"]
+                             and state.get("state") == "standby"
+                             and not state["over"])
             out.append(state)
         out.sort(key=lambda s: float(s.get("since", 0)))
         return out
@@ -493,7 +507,8 @@ def _post_vacancy(box: Box, args: argparse.Namespace) -> int:
     return 5
 
 
-def _wake_from_sleep(box: Box, stale: float, grace: float) -> list[dict]:
+def _wake_from_sleep(box: Box, stale: float, grace: float,
+                     ceiling: float = CEILING) -> list[dict]:
     """The queue, after a moment's grace for a machine that just woke up.
 
     A closed laptop lid stops every heartbeat at once. The watchers are
@@ -505,7 +520,7 @@ def _wake_from_sleep(box: Box, stale: float, grace: float) -> list[dict]:
     silent at about the same time, wait one beat and read again. A truly
     dead reserve costs this delay once.
     """
-    rows = box.queue(stale)
+    rows = box.queue(stale, ceiling)
     if grace <= 0 or not rows or any(r["free"] for r in rows):
         return rows
     ages = [r["age"] for r in rows if not r["live"] and not r.get("ahead")]
@@ -518,12 +533,12 @@ def _wake_from_sleep(box: Box, stale: float, grace: float) -> list[dict]:
     deadline = time.monotonic() + grace
     while time.monotonic() < deadline:
         time.sleep(POLL)
-        fresh = box.queue(stale)
+        fresh = box.queue(stale, ceiling)
         if any(r["free"] for r in fresh):
             print("the reserve came back.")
             return fresh
     print("no heartbeat came back, so the reserve is genuinely gone.")
-    return box.queue(stale)
+    return box.queue(stale, ceiling)
 
 
 def _unarmed(box: Box) -> list[dict]:
@@ -585,6 +600,25 @@ def _consume_vacancy(box: Box, sid: str) -> dict | None:
 
 def cmd_standby(args: argparse.Namespace, box: Box) -> int:
     """Register, then block until a claim arrives. The model spends nothing here."""
+    # A session past the brief's 300k line takes no new frame, so a seat it
+    # holds is a seat no hand-off can ever use. It leaves instead of arming,
+    # and says so, rather than making the reserve look larger than it is.
+    enrolled = box.enrolled(args.sid) or {}
+    est = enrolled.get("est")
+    if isinstance(est, (int, float)) and est >= args.ceiling:
+        box.note("arm_refused_over_ceiling", sid=args.sid, est=est)
+        for path in (box.peer_file(args.sid), box.claim_file(args.sid)):
+            try:
+                path.unlink()
+            except FileNotFoundError:
+                pass
+        print("this session reads %sk, at or past the %.0fk ceiling." % (
+            est, args.ceiling))
+        print("A session there takes no new frame, so it is handed none, and a")
+        print("seat it holds is a seat nothing can use. It has left the reserve.")
+        print("Tell the Principal a window is needed, and do not arm again.")
+        return 2
+
     old = box.read_state(args.sid)
     if old and old.get("state") == "holding":
         print("%s holds frame %s already." % (args.sid, old.get("frame")))
@@ -705,6 +739,8 @@ def _print_queue(rows: list[dict], stale: float) -> int:
             # beat stops by design. Printing STALE there says a working
             # session died.
             beat = "held"
+        if r.get("over") and shown == "standby":
+            shown = "full"
         if r["free"]:
             free += 1
         est = r.get("est")
@@ -716,6 +752,8 @@ def _print_queue(rows: list[dict], stale: float) -> int:
     print("%d free standby, %d row(s). A heartbeat older than %.0fs is stale." % (
         free, len(rows), stale))
     print("free means live, armed, and not already claimed by another sender.")
+    print("full means it is armed and at or past the ceiling, so no frame")
+    print("goes to it. It leaves the reserve when its wait next runs out.")
     print("spent means it held a frame, holds none now, and no watcher runs.")
     print("A spent session arms again to rejoin the reserve, or releases.")
     print("handed is the frame this mailbox delivered, and not the frame a")
@@ -728,7 +766,7 @@ def cmd_peers(args: argparse.Namespace, box: Box) -> int:
     """Print the reserve. This replaces the liveness probe the brief used to send."""
     for claim in box.reclaim(args.reclaim):
         print("RECLAIMED: frame %s went back to the queue, unread." % claim.get("frame"))
-    rows = box.queue(args.stale)
+    rows = box.queue(args.stale, args.ceiling)
     free = 0
     if not rows:
         print("no peer has armed a watcher in %s" % (box.root / BOX))
@@ -755,7 +793,7 @@ def cmd_peers(args: argparse.Namespace, box: Box) -> int:
 def cmd_hand(args: argparse.Namespace, box: Box) -> int:
     """Give the frame to one standby, then wait for the fact that proves it landed."""
     box.reclaim(args.reclaim)
-    rows = _wake_from_sleep(box, args.stale, args.grace)
+    rows = _wake_from_sleep(box, args.stale, args.grace, args.ceiling)
     if args.to:
         wanted = [r for r in rows if str(r.get("sid", "")).startswith(args.to)]
         if len(wanted) > 1:
@@ -775,9 +813,15 @@ def cmd_hand(args: argparse.Namespace, box: Box) -> int:
             return 2
         if not wanted[0]["free"]:
             row = wanted[0]
-            why = ("it holds frame %s" % row.get("frame")) if row.get("frame") \
-                else ("a claim already waits for it" if row.get("claimed")
-                      else "its last heartbeat was %.0fs ago" % row["age"])
+            if row.get("frame"):
+                why = "it holds frame %s" % row.get("frame")
+            elif row.get("claimed"):
+                why = "a claim already waits for it"
+            elif row.get("over"):
+                why = ("it reads %sk, at or past the %.0fk ceiling"
+                       % (row.get("est"), args.ceiling))
+            else:
+                why = "its last heartbeat was %.0fs ago" % row["age"]
             print("%s cannot take a frame: %s." % (row.get("sid"), why))
             free = [str(r.get("sid")) for r in rows if r["free"]]
             print("Free standbys now: %s" % (", ".join(free) if free else "none"))
@@ -786,7 +830,17 @@ def cmd_hand(args: argparse.Namespace, box: Box) -> int:
     else:
         wanted = [r for r in rows if r["free"]]
     if not wanted:
-        box.note("no_standby", frame=args.frame, commit=args.commit)
+        blocked = [r for r in rows if r["live"] and r.get("over")
+                   and r.get("state") == "standby"]
+        if blocked:
+            print("%d standby is over the %.0fk ceiling and cannot take a frame:"
+                  % (len(blocked), args.ceiling))
+            for r in blocked:
+                print("  %s at %sk" % (r.get("sid"), r.get("est")))
+            print("A session at the brief's 300k line takes no new frame, so it")
+            print("is handed none. This is a drought, and not an empty reserve.")
+        box.note("no_standby", frame=args.frame, commit=args.commit,
+                 over_ceiling=len(blocked))
         return _post_vacancy(box, args)
 
     taken = None
@@ -1051,12 +1105,17 @@ def build_parser() -> argparse.ArgumentParser:
                    help="seconds to block before it asks to be armed again")
     s.add_argument("--beat", type=float, default=BEAT,
                    help="seconds between heartbeats")
+    s.add_argument("--ceiling", type=float, default=CEILING,
+                   help="thousands of tokens above which this session leaves "
+                        "the reserve instead of arming")
 
     q = sub.add_parser("peers", help="print the reserve of standbys")
     q.add_argument("--stale", type=float, default=STALE,
                    help="seconds of silence that make a heartbeat stale")
     q.add_argument("--reclaim", type=float, default=RECLAIM,
                    help="seconds before an unread claim returns to the queue")
+    q.add_argument("--ceiling", type=float, default=CEILING,
+                   help="thousands of tokens above which a standby is not free")
 
     h = sub.add_parser(
         "hand",
@@ -1071,6 +1130,9 @@ def build_parser() -> argparse.ArgumentParser:
     h.add_argument("--note", default=None, help="one line the receiver must read")
     h.add_argument("--stale", type=float, default=STALE)
     h.add_argument("--reclaim", type=float, default=RECLAIM)
+    h.add_argument("--ceiling", type=float, default=CEILING,
+                   help="thousands of tokens above which a standby is not "
+                        "handed a frame, from the brief's 300k line")
     h.add_argument("--grace", type=float, default=GRACE,
                    help="seconds to wait for a heartbeat when every standby fell "
                         "silent together, as a sleeping machine does")
