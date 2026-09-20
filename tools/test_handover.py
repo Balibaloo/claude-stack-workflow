@@ -698,6 +698,50 @@ def test_a_newer_watcher_retires_the_older_one(box):
     second.join(timeout=5)
 
 
+def test_a_cleared_frame_does_not_make_a_session_a_standby(box, capsys):
+    """Its watcher exited when it took the frame. Nothing watches for it now.
+
+    Reported from a live frame: a session closed its frame, cleared the
+    column, and the table printed it as a standby with a dead heartbeat.
+    The legend reads that as a session that died, and it was working. The
+    same fault class as a holder printed STALE.
+    """
+    thread, _ = arm(box, "aaaa1111", wait=10)
+    run(box, "hand", "--frame", "50", "--commit", "abc1234", "--confirm", "0.1")
+    thread.join(timeout=5)                      # the watcher exits on the claim
+    run(box, "take", "--sid", "aaaa1111")
+    capsys.readouterr()
+
+    assert run(box, "holding", "--sid", "aaaa1111", "--frame", "none") == 0
+    out = capsys.readouterr().out
+    assert "no watcher runs for you" in out
+    assert "Arm again" in out
+
+    state = peer(box, "aaaa1111")
+    assert state["frame"] is None
+    assert state["state"] != "standby", "a session does not become a standby by saying so"
+
+    run(box, "peers")
+    table = capsys.readouterr().out
+    row = [line for line in table.splitlines() if line.startswith("aaaa1111")][0]
+    assert "spent" in row and "STALE" not in row
+    assert "0 free standby" in table, "a spent row is never offered a frame"
+
+
+def test_a_standby_that_really_died_still_reads_stale(box):
+    """The fix must not hide the case the STALE column exists for."""
+    api = handover.Box(box)
+    api.write_state("dddd4444", {
+        "sid": "dddd4444", "name": "gone", "since": time.time() - 9000,
+        "since_iso": "then", "armed_at": time.time() - 9000,
+        "beat": time.time() - handover.STALE - 30,
+        "state": "standby", "frame": None,
+    })
+    row = api.queue(handover.STALE)[0]
+    assert row["live"] is False and row["free"] is False
+    assert run(box, "peers") == 1
+
+
 def test_the_hook_name_beats_the_typed_name(box):
     """A session cannot know its own peer name, so its guess must not win.
 
@@ -758,7 +802,7 @@ def test_holding_corrects_the_handed_column(box, capsys):
 
     assert run(box, "holding", "--sid", "aaaa1111", "--frame", "none") == 0
     assert peer(box, "aaaa1111")["frame"] is None
-    assert peer(box, "aaaa1111")["state"] == "standby"
+    assert peer(box, "aaaa1111")["state"] != "standby",         "clearing a frame does not arm a watcher, so it does not make a standby"
     assert run(box, "holding", "--sid", "bbbb2222", "--frame", "1") == 1
 
 

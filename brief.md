@@ -71,6 +71,17 @@ three warnings only:
   A hand-off is {{principal}}'s assignment, continued. Do not wait for
   {{principal}} to name the peer.
 
+  A hand-off gives away the whole stack and ends your work. You stop. It
+  is never a way to give a task to another session while you keep
+  working. Two sessions on one stack write over each other's records, and
+  the stack stops answering "where are we", which is the one question it
+  exists for.
+
+  So when a frame needs a session and you are not full, push the frame and
+  tell {{principal}}. {{principal}} assigns work to a session. You do not,
+  and neither does a peer. The reserve exists to continue this seat, and
+  not to widen it.
+
 Why the count arrives every turn: the harness cannot know which turn is
 the last, so it says the number each time. Why you ignore it until 300k:
 your judgement holds to 400k, and below 300k the number changes nothing

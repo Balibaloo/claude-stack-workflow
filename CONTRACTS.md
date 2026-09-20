@@ -243,8 +243,12 @@ waiting before it cost the standby no tokens.
     that arms no watcher is still reachable by a message. The sender can
     also prefer the cleanest standby.
 
-**The rule that goes in the briefs.** Hand a frame off with the command,
-and write the status line from its exit code. A message is never the first
+**The rule that goes in the briefs.** Hand off with the command, and
+write the status line from its exit code. A hand-off gives away the whole
+stack and ends the sender's work, and it is never a way to give a task to
+a peer while the sender keeps working. A tool that moves work between
+sessions will be used to widen a seat unless its own documentation says
+it continues one. A message is never the first
 route and never the only route. Resuming a sub-agent by message is a
 different thing and stays as it is.
 

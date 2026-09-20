@@ -6,6 +6,13 @@ A hand-off that lands in a session that sits idle.
     python tools/handover.py hand --frame 7 --commit 82f4e9e
     python tools/handover.py take --sid 2555d93f        # the woken standby
 
+A session at 400k gives its whole stack to a fresh peer and stops. That
+is what a hand-off is, and it is the only thing it is. It is never a way
+to give a task to another session while the sender keeps working: two
+sessions on one stack write over each other's records, and the stack
+stops answering "where are we". A frame that needs a session while you
+are not full is pushed and named to the Principal, who assigns it.
+
 A session at 400k must give its frame to a fresh peer and stop. A message
 is not how it does that, and the reason is not that messages fail to
 arrive. They arrive. Across 248 cross-session messages in one machine's
@@ -688,7 +695,12 @@ def _print_queue(rows: list[dict], stale: float) -> int:
         shown = r.get("state", "?")
         if r["claimed"] and shown == "standby":
             shown = "woken"
-        if shown == "holding":
+        if shown == "holding" and r.get("frame") is None:
+            # It held a frame, holds none now, and nothing is watching for
+            # it. That is not a standby and it is not a holder.
+            shown = "spent"
+            beat = "-"
+        elif shown == "holding":
             # A holder's watcher exited when it delivered the claim, so the
             # beat stops by design. Printing STALE there says a working
             # session died.
@@ -704,6 +716,8 @@ def _print_queue(rows: list[dict], stale: float) -> int:
     print("%d free standby, %d row(s). A heartbeat older than %.0fs is stale." % (
         free, len(rows), stale))
     print("free means live, armed, and not already claimed by another sender.")
+    print("spent means it held a frame, holds none now, and no watcher runs.")
+    print("A spent session arms again to rejoin the reserve, or releases.")
     print("handed is the frame this mailbox delivered, and not the frame a")
     print("session holds now. The stack is the record of that. A session that")
     print("moved on corrects the column with the holding command.")
@@ -820,6 +834,8 @@ def cmd_hand(args: argparse.Namespace, box: Box) -> int:
                 taken, args.frame, time.monotonic() - start))
             print("Write the status line with %s as the holder, commit, and stop."
                   % taken)
+            print("Stop means stop. The stack is theirs now, and two sessions on")
+            print("one stack write over each other.")
             return 0
         time.sleep(POLL)
     box.note("unconfirmed", sid=taken, frame=args.frame, seconds=args.confirm)
@@ -996,8 +1012,13 @@ def cmd_holding(args: argparse.Namespace, box: Box) -> int:
         return 1
     was = state.get("frame")
     if args.frame.lower() in ("none", "-", ""):
+        # Do not call it a standby. Its watcher exited when it took the
+        # frame, so writing "standby" here produces a row with a dead
+        # heartbeat, which the table's own legend reads as a session that
+        # died. A session becomes a standby again by arming, and never by
+        # saying it holds nothing.
         state["frame"] = None
-        state["state"] = "standby" if state.get("state") == "holding" else state.get("state")
+        state["title"] = ""
     else:
         state["frame"] = args.frame
         state["state"] = "holding"
@@ -1006,6 +1027,9 @@ def cmd_holding(args: argparse.Namespace, box: Box) -> int:
     print("%s: handed was %s, and now reads %s." % (
         args.sid, was if was is not None else "-",
         state["frame"] if state["frame"] is not None else "-"))
+    if state["frame"] is None:
+        print("You hold no frame, and no watcher runs for you. That is not a")
+        print("standby. Arm again to rejoin the reserve, or release to leave it.")
     print("The stack is still the record of what you hold. This is the doorbell.")
     return 0
 
@@ -1034,7 +1058,10 @@ def build_parser() -> argparse.ArgumentParser:
     q.add_argument("--reclaim", type=float, default=RECLAIM,
                    help="seconds before an unread claim returns to the queue")
 
-    h = sub.add_parser("hand", help="give a frame to one live standby")
+    h = sub.add_parser(
+        "hand",
+        help="give the stack to one live standby and stop working. Not a way "
+             "to hand a task to a peer while you keep the seat.")
     h.add_argument("--frame", required=True, help="the frame number")
     h.add_argument("--commit", required=True, help="the stack's commit")
     h.add_argument("--to", default=None,
