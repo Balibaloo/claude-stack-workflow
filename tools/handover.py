@@ -136,6 +136,8 @@ Exit codes, no overlap.
              2 a usage error or a claim that will not open.
     drop     0 the vacancy is cancelled, 1 no vacancy names that frame,
              2 a usage error.
+    holding  0 the handed column is corrected, 1 the session is not in the
+             reserve, 2 a usage error.
 
 Exit 1 never means "something went wrong here". A write that fails and a
 file that will not open both return 2 or 6, because a session that reads
@@ -372,7 +374,11 @@ class Box:
                              and state.get("state") == "standby")
             enrolled = self.enrolled(sid) or {}
             state["est"] = enrolled.get("est")
-            state["name"] = state.get("name") or enrolled.get("name") or ""
+            # The hook reads the name from the harness registry. A session
+            # cannot know its own peer name without asking for a peer list,
+            # so a name typed at arm time is a guess, and a wrong name is
+            # unaddressable on the one route that needs it. The hook wins.
+            state["name"] = enrolled.get("name") or state.get("name") or ""
             out.append(state)
         out.sort(key=lambda s: float(s.get("since", 0)))
         return out
@@ -650,7 +656,7 @@ def cmd_standby(args: argparse.Namespace, box: Box) -> int:
 def _print_queue(rows: list[dict], stale: float) -> int:
     """Print the reserve and return how many standbys are free to take a frame."""
     print("%-10s %-22s %-9s %-7s %-6s %-6s %s" % (
-        "sid", "name", "state", "beat", "frame", "ctx", "armed"))
+        "sid", "name", "state", "beat", "handed", "ctx", "armed"))
     free = 0
     for r in rows:
         beat = "%.0fs" % r["age"] if r["live"] else "STALE"
@@ -659,6 +665,11 @@ def _print_queue(rows: list[dict], stale: float) -> int:
         shown = r.get("state", "?")
         if r["claimed"] and shown == "standby":
             shown = "woken"
+        if shown == "holding":
+            # A holder's watcher exited when it delivered the claim, so the
+            # beat stops by design. Printing STALE there says a working
+            # session died.
+            beat = "held"
         if r["free"]:
             free += 1
         est = r.get("est")
@@ -670,6 +681,9 @@ def _print_queue(rows: list[dict], stale: float) -> int:
     print("%d free standby, %d row(s). A heartbeat older than %.0fs is stale." % (
         free, len(rows), stale))
     print("free means live, armed, and not already claimed by another sender.")
+    print("handed is the frame this mailbox delivered, and not the frame a")
+    print("session holds now. The stack is the record of that. A session that")
+    print("moved on corrects the column with the holding command.")
     return free
 
 
@@ -944,6 +958,35 @@ def cmd_drop(args: argparse.Namespace, box: Box) -> int:
     return 0
 
 
+def cmd_holding(args: argparse.Namespace, box: Box) -> int:
+    """Say which frame this session holds now, or that it holds none.
+
+    The mailbox records the frame it delivered, and it cannot know what
+    happened next. A session took frame 43, closed it, claimed frame 46,
+    and its row still read 43 an hour later, so a live row contradicted
+    the stack. There was no command for it and the file was edited by
+    hand. Machine state that a person has to edit by hand is a defect.
+    """
+    state = box.read_state(args.sid)
+    if not state:
+        print("%s is not in the reserve, so there is nothing to correct." % args.sid)
+        return 1
+    was = state.get("frame")
+    if args.frame.lower() in ("none", "-", ""):
+        state["frame"] = None
+        state["state"] = "standby" if state.get("state") == "holding" else state.get("state")
+    else:
+        state["frame"] = args.frame
+        state["state"] = "holding"
+    box.write_state(args.sid, state)
+    box.note("holding_set", sid=args.sid, was=was, now=state["frame"])
+    print("%s: handed was %s, and now reads %s." % (
+        args.sid, was if was is not None else "-",
+        state["frame"] if state["frame"] is not None else "-"))
+    print("The stack is still the record of what you hold. This is the doorbell.")
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(
         description="A hand-off that lands in a session that sits idle.")
@@ -955,7 +998,8 @@ def build_parser() -> argparse.ArgumentParser:
     s.add_argument("--sid", required=True,
                    help="this session id, the eight characters the hook prints")
     s.add_argument("--name", default=None,
-                   help="this session's peer name, for the person reading the queue")
+                   help="only for a checkout with no context hook. The hook reads "
+                        "the true peer name from the harness registry and wins.")
     s.add_argument("--wait", type=float, default=WAIT,
                    help="seconds to block before it asks to be armed again")
     s.add_argument("--beat", type=float, default=BEAT,
@@ -988,6 +1032,11 @@ def build_parser() -> argparse.ArgumentParser:
 
     r = sub.add_parser("release", help="leave the reserve")
     r.add_argument("--sid", required=True)
+
+    o = sub.add_parser("holding", help="correct the frame this session holds")
+    o.add_argument("--sid", required=True)
+    o.add_argument("--frame", required=True,
+                   help="the frame held now, or none when the session holds one no longer")
 
     d = sub.add_parser("drop", help="cancel a hand-off that waits for nobody")
     d.add_argument("--frame", required=True, help="the frame to stop offering")
@@ -1039,6 +1088,7 @@ def main(argv: list[str] | None = None) -> int:
         return {
             "standby": cmd_standby, "peers": cmd_peers, "hand": cmd_hand,
             "take": cmd_take, "release": cmd_release, "drop": cmd_drop,
+            "holding": cmd_holding,
         }[args.cmd](args, box)
     except Unreadable as exc:
         print("a file is on disk and will not open: %s" % exc, file=sys.stderr)

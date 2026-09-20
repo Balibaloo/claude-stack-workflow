@@ -21,10 +21,14 @@ You are a standby in the reserve. Do these four things, and nothing else.
    characters after the word `Session`.
 2. Arm one watcher. Use the Bash tool with its background flag, so that
    the process outlives this turn:
-   `{{interpreter}} tools/handover.py standby --sid <your session id> --name <your peer name>`
+   `{{interpreter}} tools/handover.py standby --sid <your session id>`
+   Pass no name. You cannot know your own peer name without asking for a
+   peer list, and a guessed name is unaddressable on the one route that
+   needs it. The context hook reads the true name and writes it.
 3. Run `{{interpreter}} tools/handover.py peers` in the foreground. Find
    your own session id in the table. A background command returns at once
-   and can still fail, so this step turns a hope into a fact.
+   and can still fail, so this step turns a hope into a fact. Read your
+   peer name from the name column of your own row.
 4. Reply with one line: your session id, your peer name, and the word
    standby. Then stop.
 

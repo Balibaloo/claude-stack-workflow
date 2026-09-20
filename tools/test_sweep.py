@@ -13,6 +13,7 @@ bytes and turns `autocrlf` off.
 from __future__ import annotations
 
 import codecs
+import json
 import os
 import subprocess
 from pathlib import Path, PurePosixPath
@@ -417,22 +418,49 @@ PATHS = [
 ]
 
 
+REFERENCE = json.loads(
+    (Path(__file__).parent / "glob_reference.json").read_text(encoding="utf-8"))
+
+
+def test_the_frozen_table_covers_exactly_these_cases():
+    """A case added here without regenerating the table would go unchecked."""
+    assert sorted(REFERENCE["expected"]) == sorted(GLOBS)
+    assert REFERENCE["paths"] == PATHS
+
+
 @pytest.mark.skipif(not hasattr(PurePosixPath, "full_match"),
                     reason="no reference implementation before Python 3.13")
 @pytest.mark.parametrize("glob", GLOBS)
-def test_the_translation_agrees_with_full_match(glob):
-    """The translator must answer exactly what `PurePath.full_match` answers.
+def test_the_frozen_table_still_matches_pathlib(glob):
+    """The frozen table must never drift from the implementation it copies.
 
-    This is the whole specification. `full_match` arrived in Python 3.13
-    and the kit must run on less, so the translation carries the
-    behaviour. Where an interpreter has the reference, every case is
-    compared against it, and a disagreement is a defect in the
-    translation and never a new opinion about globs.
+    This is the half that needs Python 3.13. It proves the table is still
+    a true record of `full_match`, so the other half can trust it on an
+    interpreter that has no `full_match` to ask.
     """
-    for path in PATHS:
-        pure = PurePosixPath(path)
-        assert sweep._full_match(pure, glob) == pure.full_match(glob), (
-            f"{glob!r} against {path!r}")
+    live = {p for p in REFERENCE["paths"] if PurePosixPath(p).full_match(glob)}
+    assert live == set(REFERENCE["expected"][glob]), (
+        f"{glob!r}: pathlib changed, so regenerate tools/glob_reference.json")
+
+
+@pytest.mark.parametrize("glob", GLOBS)
+def test_the_translation_matches_the_frozen_reference(glob):
+    """The whole specification, checked on every interpreter.
+
+    `full_match` arrived in Python 3.13 and the kit must run on less, so a
+    differential against the live reference proves nothing exactly where
+    the proof matters. A destination reported that: a green run on 3.12
+    exercised the rule cases and never the comparison. The table is
+    therefore frozen in `glob_reference.json` and compared here, so 3.12
+    runs all 1122 comparisons.
+
+    Regenerate the table on an interpreter that has `full_match`:
+
+        python -c "import sys,json,pathlib; sys.path.insert(0,'tools');             import test_sweep as t; from pathlib import PurePosixPath as P;             d=json.loads(pathlib.Path('tools/glob_reference.json').read_text());             d['generated_on']=sys.version.split()[0]; d['paths']=t.PATHS;             d['expected']={g:[p for p in t.PATHS if P(p).full_match(g)] for g in t.GLOBS};             pathlib.Path('tools/glob_reference.json').write_text(json.dumps(d,indent=1)+chr(10))"
+    """
+    got = {p for p in REFERENCE["paths"]
+           if sweep._full_match(PurePosixPath(p), glob)}
+    assert got == set(REFERENCE["expected"][glob]), f"{glob!r}"
 
 
 @pytest.mark.parametrize("glob,path,expected", [

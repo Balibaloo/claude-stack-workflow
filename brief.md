@@ -87,8 +87,12 @@ spends nothing while it waits.
 When {{principal}} makes you a standby, arm one watcher and stop:
 
 ```
-{{interpreter}} tools/handover.py standby --sid <your session id> --name <your current peer name>
+{{interpreter}} tools/handover.py standby --sid <your session id>
 ```
+
+Pass no name. A session cannot know its own peer name without asking for
+a peer list, and a guessed name reaches nobody on the one route that
+needs it. The hook writes the true name.
 
 One line, and no line continuation. A backslash continues a line in Git
 Bash and breaks it in PowerShell.
@@ -117,6 +121,14 @@ On that wake, read the task output and act on the exit code.
   again. Ask {{principal}} for work.
 - 2: you hold a frame already, so you are not a standby. Report the frame
   you hold and stop.
+
+The peers table has a `handed` column. It names the frame the mailbox
+delivered to a session, and never the frame that session holds now. The
+stack is the record of that. When you close a handed frame and take
+another, correct the column:
+`{{interpreter}} tools/handover.py holding --sid <your session id> --frame <n>`
+Use `--frame none` when you hold no frame. A row that contradicts the
+stack sends a reader to the wrong place.
 
 Arm one watcher only. Two watchers for one session write two heartbeats
 and race for one claim.

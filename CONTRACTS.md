@@ -103,8 +103,8 @@ only for what the map does not answer.
 **What it is.** One command that applies one mechanical edit across many
 tracked files.
 
-**It ships with the kit**, at `meta/tools/sweep.py`, with 25 tests. Copy
-both. The list below is what it already does, kept so that a port to
+**It ships with the kit**, at `meta/tools/sweep.py`, with 114 tests and a frozen
+reference table in `glob_reference.json`. Copy all three. The list below is what it already does, kept so that a port to
 another language has a specification.
 
 **The trigger to use it.** Use it at the first change that is the same
@@ -141,7 +141,7 @@ sweep. Read the diff once, for the judgement cases only.
 **What it is.** One command that moves a frame from a full session to a
 fresh one. It lands while the fresh session sits idle at its prompt.
 
-**It ships with the kit**, at `meta/tools/handover.py`, with 38 tests.
+**It ships with the kit**, at `meta/tools/handover.py`, with 42 tests.
 Copy both, and copy `meta/commands/standby.md` with them. The enrolment
 in requirement 14 lives in `meta/hooks/context_count.py`, so copy that
 too. The list below is what it already does, kept so that a port to
@@ -226,7 +226,18 @@ waiting before it cost the standby no tokens.
     to another project. The mailbox at the repository root makes the
     error impossible, because a sender reads only the reserve of its own
     checkout.
-15. Enrol a session at no cost. The context hook writes the session id,
+15. Never print a working session as dead, and never print a stale frame
+    as current. A holder's watcher exits when it delivers the claim, so
+    its heartbeat stops by design and a beat column would read STALE for
+    an hour. The frame column names what the mailbox delivered, and the
+    stack is the record of what a session holds now, so give a command
+    that corrects it. Both were reported from a live frame, where a row
+    contradicted the stack and the file was edited by hand.
+16. Never ask a session for its own peer name. It cannot know one without
+    asking for a peer list, and the message fallback addresses by name,
+    so a guess is unaddressable. The hook reads the true name from the
+    harness registry, and the hook wins over anything typed.
+17. Enrol a session at no cost. The context hook writes the session id,
     the peer name and the context estimate on every prompt. So a session
     that arms no watcher is still reachable by a message. The sender can
     also prefer the cleanest standby.

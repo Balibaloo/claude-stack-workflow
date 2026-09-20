@@ -29,6 +29,7 @@ from pathlib import Path
 import pytest
 
 import handover
+from handover import _write_json
 
 GIT_ENV = {
     "GIT_AUTHOR_NAME": "test", "GIT_AUTHOR_EMAIL": "test@example.invalid",
@@ -617,6 +618,70 @@ def test_drop_cancels_a_vacancy(box, capsys):
               (box / handover.BOX / "log.jsonl").read_text(
                   encoding="utf-8").splitlines()]
     assert "vacancy_dropped" in events
+
+
+def test_the_hook_name_beats_the_typed_name(box):
+    """A session cannot know its own peer name, so its guess must not win.
+
+    Reported from a live frame: a session typed a description as its
+    name, `peers` printed it, and a peer wanting to use the message
+    fallback would have addressed a name that reaches nobody.
+    """
+    arm(box, "aaaa1111", name="Opus5-standby")
+    api = handover.Box(box)
+    _write_json(api.sessions / "aaaa1111.json",
+                {"sid": "aaaa1111", "name": "rota-52", "est": 12, "t": time.time()})
+    row = [r for r in api.queue(handover.STALE) if r["sid"] == "aaaa1111"][0]
+    assert row["name"] == "rota-52", "the registry name the hook wrote wins"
+    assert row["est"] == 12
+
+
+def test_a_typed_name_still_serves_a_checkout_with_no_hook(box):
+    """The hook is the kit's, and a destination may not have installed it."""
+    arm(box, "aaaa1111", name="typed-only")
+    row = [r for r in handover.Box(box).queue(handover.STALE)
+           if r["sid"] == "aaaa1111"][0]
+    assert row["name"] == "typed-only"
+
+
+def test_a_holder_is_not_printed_as_stale(box, capsys):
+    """Its watcher exits when it delivers the claim, so the beat stops by design.
+
+    Reported from a live frame: a working session read STALE for an hour,
+    which says the session died.
+    """
+    arm(box, "aaaa1111")
+    run(box, "hand", "--frame", "7", "--commit", "abc1234", "--confirm", "0.1")
+    run(box, "take", "--sid", "aaaa1111")
+    api = handover.Box(box)
+    state = api.read_state("aaaa1111")
+    state["beat"] = time.time() - 9000          # an hour of honest silence
+    api.write_state("aaaa1111", state)
+    capsys.readouterr()
+
+    run(box, "peers")
+    out = capsys.readouterr().out
+    row = [line for line in out.splitlines() if line.startswith("aaaa1111")][0]
+    assert "held" in row and "STALE" not in row
+    assert "handed" in out, "the column says what it means"
+
+
+def test_holding_corrects_the_handed_column(box, capsys):
+    """A row that contradicts the stack sends a reader to the wrong place."""
+    arm(box, "aaaa1111")
+    run(box, "hand", "--frame", "43", "--commit", "abc1234", "--confirm", "0.1")
+    run(box, "take", "--sid", "aaaa1111")
+    assert peer(box, "aaaa1111")["frame"] == "43"
+    capsys.readouterr()
+
+    assert run(box, "holding", "--sid", "aaaa1111", "--frame", "46") == 0
+    assert "was 43, and now reads 46" in capsys.readouterr().out
+    assert peer(box, "aaaa1111")["frame"] == "46"
+
+    assert run(box, "holding", "--sid", "aaaa1111", "--frame", "none") == 0
+    assert peer(box, "aaaa1111")["frame"] is None
+    assert peer(box, "aaaa1111")["state"] == "standby"
+    assert run(box, "holding", "--sid", "bbbb2222", "--frame", "1") == 1
 
 
 def test_the_sid_decides_the_address_and_not_the_name(box):

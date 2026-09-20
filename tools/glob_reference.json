@@ -1,0 +1,283 @@
+{
+ "note": "What PurePath.full_match answers, frozen on the interpreter named below. tools/sweep.py translates globs itself because full_match needs Python 3.13, and this table lets an older interpreter check the translation against the reference it does not carry. Regenerate by running the generator in the docstring of test_the_translation_matches_the_frozen_reference.",
+ "generated_on": "3.14.2",
+ "paths": [
+  "a.py",
+  "b.py",
+  "c.py",
+  "d.py",
+  "x.py",
+  "x/a.py",
+  "tests/x.py",
+  "tests/sub/x.py",
+  "tests/test_a.py",
+  "src/a.py",
+  "src/a/b.py",
+  "src/a/b/c.py",
+  "src/x.py",
+  "a/b",
+  "a/x/b",
+  "ab/x",
+  "aXXb/x",
+  "aX/Yb/x",
+  "src",
+  "tools/sweep.py",
+  "tools/test_sweep.py",
+  "a+b.py",
+  "a(b).py",
+  "a.b|c",
+  "x[.py",
+  "].py",
+  "a1.py",
+  "a/b/c/d.py",
+  "sxc/a.py",
+  "x",
+  "x/y",
+  "x/y/z",
+  "a/b/c"
+ ],
+ "expected": {
+  "tests/*.py": [
+   "tests/x.py",
+   "tests/test_a.py"
+  ],
+  "*.py": [
+   "a.py",
+   "b.py",
+   "c.py",
+   "d.py",
+   "x.py",
+   "a+b.py",
+   "a(b).py",
+   "x[.py",
+   "].py",
+   "a1.py"
+  ],
+  "**/*.py": [
+   "a.py",
+   "b.py",
+   "c.py",
+   "d.py",
+   "x.py",
+   "x/a.py",
+   "tests/x.py",
+   "tests/sub/x.py",
+   "tests/test_a.py",
+   "src/a.py",
+   "src/a/b.py",
+   "src/a/b/c.py",
+   "src/x.py",
+   "tools/sweep.py",
+   "tools/test_sweep.py",
+   "a+b.py",
+   "a(b).py",
+   "x[.py",
+   "].py",
+   "a1.py",
+   "a/b/c/d.py",
+   "sxc/a.py"
+  ],
+  "src/**/*.py": [
+   "src/a.py",
+   "src/a/b.py",
+   "src/a/b/c.py",
+   "src/x.py"
+  ],
+  "src/**": [
+   "src/a.py",
+   "src/a/b.py",
+   "src/a/b/c.py",
+   "src/x.py"
+  ],
+  "**": [
+   "a.py",
+   "b.py",
+   "c.py",
+   "d.py",
+   "x.py",
+   "x/a.py",
+   "tests/x.py",
+   "tests/sub/x.py",
+   "tests/test_a.py",
+   "src/a.py",
+   "src/a/b.py",
+   "src/a/b/c.py",
+   "src/x.py",
+   "a/b",
+   "a/x/b",
+   "ab/x",
+   "aXXb/x",
+   "aX/Yb/x",
+   "src",
+   "tools/sweep.py",
+   "tools/test_sweep.py",
+   "a+b.py",
+   "a(b).py",
+   "a.b|c",
+   "x[.py",
+   "].py",
+   "a1.py",
+   "a/b/c/d.py",
+   "sxc/a.py",
+   "x",
+   "x/y",
+   "x/y/z",
+   "a/b/c"
+  ],
+  "a/**/b": [
+   "a/b",
+   "a/x/b"
+  ],
+  "?.py": [
+   "a.py",
+   "b.py",
+   "c.py",
+   "d.py",
+   "x.py",
+   "].py"
+  ],
+  "[ab].py": [
+   "a.py",
+   "b.py"
+  ],
+  "[!ab].py": [
+   "c.py",
+   "d.py",
+   "x.py",
+   "].py"
+  ],
+  "[a-c].py": [
+   "a.py",
+   "b.py",
+   "c.py"
+  ],
+  "[]].py": [
+   "].py"
+  ],
+  "TESTS/*.PY": [],
+  "a**b/x": [
+   "ab/x",
+   "aXXb/x"
+  ],
+  "**/**/*.py": [
+   "a.py",
+   "b.py",
+   "c.py",
+   "d.py",
+   "x.py",
+   "x/a.py",
+   "tests/x.py",
+   "tests/sub/x.py",
+   "tests/test_a.py",
+   "src/a.py",
+   "src/a/b.py",
+   "src/a/b/c.py",
+   "src/x.py",
+   "tools/sweep.py",
+   "tools/test_sweep.py",
+   "a+b.py",
+   "a(b).py",
+   "x[.py",
+   "].py",
+   "a1.py",
+   "a/b/c/d.py",
+   "sxc/a.py"
+  ],
+  "src/*/x.py": [],
+  "*": [
+   "a.py",
+   "b.py",
+   "c.py",
+   "d.py",
+   "x.py",
+   "src",
+   "a+b.py",
+   "a(b).py",
+   "a.b|c",
+   "x[.py",
+   "].py",
+   "a1.py",
+   "x"
+  ],
+  "**.py": [
+   "a.py",
+   "b.py",
+   "c.py",
+   "d.py",
+   "x.py",
+   "a+b.py",
+   "a(b).py",
+   "x[.py",
+   "].py",
+   "a1.py"
+  ],
+  "src/**/": [
+   "src/a.py",
+   "src/a/b.py",
+   "src/a/b/c.py",
+   "src/x.py"
+  ],
+  "./x.py": [
+   "x.py"
+  ],
+  "a+b.py": [
+   "a+b.py"
+  ],
+  "a(b).py": [
+   "a(b).py"
+  ],
+  "a.b|c": [
+   "a.b|c"
+  ],
+  "x[.py": [
+   "x[.py"
+  ],
+  "tools/sweep.py": [
+   "tools/sweep.py"
+  ],
+  "tools/*.py": [
+   "tools/sweep.py",
+   "tools/test_sweep.py"
+  ],
+  "**/test_*.py": [
+   "tests/test_a.py",
+   "tools/test_sweep.py"
+  ],
+  "a/*/*/d.py": [
+   "a/b/c/d.py"
+  ],
+  "[!a]*.py": [
+   "b.py",
+   "c.py",
+   "d.py",
+   "x.py",
+   "x[.py",
+   "].py"
+  ],
+  "*[0-9].py": [
+   "a1.py"
+  ],
+  "s?c/*.py": [
+   "src/a.py",
+   "src/x.py",
+   "sxc/a.py"
+  ],
+  "**/x": [
+   "ab/x",
+   "aXXb/x",
+   "aX/Yb/x",
+   "x"
+  ],
+  "x/**": [
+   "x/a.py",
+   "x/y",
+   "x/y/z"
+  ],
+  "a/**": [
+   "a/b",
+   "a/x/b",
+   "a/b/c/d.py",
+   "a/b/c"
+  ]
+ }
+}
