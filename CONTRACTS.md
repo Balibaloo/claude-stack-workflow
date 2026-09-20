@@ -259,7 +259,14 @@ waiting before it cost the standby no tokens.
     asking for a peer list, and the message fallback addresses by name,
     so a guess is unaddressable. The hook reads the true name from the
     harness registry, and the hook wins over anything typed.
-18. Enrol a session at no cost. The context hook writes the session id,
+18. Print the reserve for a person, and keep the files for a script. A
+    table is read by a human and its columns carry words chosen for
+    them: a holder reads `held` in the beat column, and a watcher that
+    parsed that column alone raised a false alarm on a session that was
+    working. Anything automatic reads `.handover/peers/*.json`, which
+    carries the state, the beat and the frame as fields. Say so, because
+    the table is the surface a script reaches for first.
+19. Enrol a session at no cost. The context hook writes the session id,
     the peer name and the context estimate on every prompt. So a session
     that arms no watcher is still reachable by a message. The sender can
     also prefer the cleanest standby.

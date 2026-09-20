@@ -208,9 +208,9 @@ the machine the tool was built on:
   records, for an ambiguity that context resolves every time. Recorded so
   the next reviewer finds the ruling instead of the defect.
 - The wake: the time from the claim file appearing to the standby's first
-  turn. 6 seconds, and no longer borrowed. Measured here once, then
-  measured twice more in a second project on its first two real hand-offs,
-  6 seconds each time. (observed: three projects, 2026-09-20)
+  turn. Four measurements across two projects and this one, on real
+  hand-offs: 6, 6, 4 and 7 seconds. Call it under ten and stop measuring.
+  (observed: three projects, 2026-09-20)
 - The cost of waiting: nothing. A process blocks, and the model spends no
   tokens until it wakes. (borrowed)
 - The cost of arming a standby: one command and one line of reply.
@@ -223,9 +223,10 @@ the machine the tool was built on:
   a destination's hand-off log, 2026-09-20)
 - How long the harness lets a background process live. A heartbeat beat
   150 times over 49.7 minutes here and then ended on its own clock, with
-  no interruption, across idle turns and busy ones. The longest gap
-  between two beats was 22 seconds against a 20 second interval. The
-  ceiling is above 50 minutes and is otherwise unknown. {{measure your
+  no interruption. A destination then ran two watchers past 71 minutes
+  with nothing stale, and that run had not ended when it was read. So the
+  lower bound is 71 minutes and there is still no ceiling, only a floor
+  that keeps moving. (observed: two projects, 2026-09-20) {{measure your
   own, then set `--wait` below it}}
 
 ## Decisions by the assistant

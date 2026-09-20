@@ -92,6 +92,15 @@ Do the steps in this order. The order matters, because step 1 stops step
    the prompt of every session in the repository, so test it before you
    trust it.
 
+   That command leaves nothing behind, and it is worth knowing why. The
+   hook enrols every session it sees, and this test is not a session, so
+   the hook refuses to enrol anything with no transcript named. An earlier
+   version did enrol it, twice in one destination, and `peers` then listed
+   a session that had never existed. The session holding that project's
+   seat found the row and could not tell whose it was, because a row in
+   the reserve is read as a live session. Run `tools/handover.py peers`
+   after the test and check that no row names your test id.
+
 4. **The brief.** Your `CLAUDE.md` holds the old hand-off rule. It tells a
    session to list its peers and send each one a liveness probe. That rule
    cannot work and its stated reason was wrong, so replace it:

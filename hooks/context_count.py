@@ -183,16 +183,25 @@ def repo_root(start):
     return os.path.abspath(start or os.getcwd())
 
 
-def enrol(root, sid, est, turns):
+def enrol(root, sid, est, turns, transcript):
     """Record that this session exists, so a hand-off can reach it later.
 
     A session that arms no watcher is still reachable by a message, and
     the Principal's habit of opening a window and pasting into it is
-    enough to enrol one. The file also carries the context estimate, so
-    `tools/handover.py peers` can show which standby is the cleanest. The
-    write costs one small file per prompt and fails silent.
+    enough to enrol one. A hand-run test of this hook is not a session
+    and must not leave a row behind. The file also carries the context
+    estimate, so `tools/handover.py peers` can show which standby is the
+    cleanest. The write costs one small file per prompt and fails silent.
     """
-    if not sid:
+    if not sid or not transcript:
+        # A harness always names a transcript, even on turn one when the
+        # file does not exist yet. An empty name means nobody is there:
+        # the install procedure tests this hook by hand with an empty
+        # one, and enrolling that wrote a row into the reserve for a
+        # session that never existed. It happened twice in one
+        # destination, and the second time the session holding that
+        # project's seat found the row and could not tell whose it was.
+        # A row in the reserve is read as a live session.
         return
     box = os.path.join(root, ".handover", "sessions")
     try:
@@ -291,7 +300,7 @@ def main():
         est, turns = result
     wake = turns == 0
     root = repo_root(data.get("cwd") or os.environ.get("CLAUDE_PROJECT_DIR"))
-    enrol(root, sid, est, turns)
+    enrol(root, sid, est, turns, data.get("transcript_path"))
     orphan = waiting(root)
     if not always and not wake and not orphan and est is not None and est < WARN:
         return
