@@ -248,8 +248,9 @@ heredoc lost a backslash on 30. (borrowed)
    constant, `SUMMARY_PREFIX`. Set it to your commit standard.
 9. Return 0 when the line is written and committed, or written with
    `--no-commit`. Return 1 when the line is written and the commit
-   failed. Return 2 for a usage error, an empty body, or a frame that the
-   stack does not hold.
+   failed. Return 2 for a usage error, an empty body, a frame that the
+   stack does not hold, or a stack or a body file that cannot be read as
+   UTF-8. On 2, print one line and write nothing.
 
 **The rule that goes in the briefs.** Write every status line with the
 tool. A body that holds a backslash or a quote goes in a file that the

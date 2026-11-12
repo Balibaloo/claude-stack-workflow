@@ -34,7 +34,8 @@ root of the checkout. Keep the three files in one directory.
 
 Exit codes: 0 the line is written and committed, or written with
 `--no-commit`. 1 the line is written and the commit failed. 2 a usage
-error, an empty body, or a frame that the stack does not hold.
+error, an empty body, a frame that the stack does not hold, or a stack or
+a body file that cannot be read as UTF-8. On 2, no line is written.
 """
 from __future__ import annotations
 
@@ -222,7 +223,12 @@ def main(argv: list[str] | None = None) -> int:
         print("no stack at %s" % stack, file=sys.stderr)
         return 2
     now = _clock()
-    text = stack.read_bytes().decode("utf-8")
+    try:
+        text = stack.read_bytes().decode("utf-8")
+    except (OSError, UnicodeDecodeError) as exc:
+        print("the stack %s cannot be read as UTF-8 (%s), so no line was written."
+              % (stack, exc.__class__.__name__), file=sys.stderr)
+        return 2
     when = now.strftime("%Y-%m-%d %H:%M")
     found = find(text, args.frame)
     if found is None:
@@ -231,7 +237,12 @@ def main(argv: list[str] | None = None) -> int:
         return 2
 
     if args.body is not None:
-        body = one_line(Path(args.body).read_bytes().decode("utf-8"))
+        try:
+            body = one_line(Path(args.body).read_bytes().decode("utf-8"))
+        except (OSError, UnicodeDecodeError) as exc:
+            print("the body file %s cannot be read as UTF-8 (%s), so no line was "
+                  "written." % (args.body, exc.__class__.__name__), file=sys.stderr)
+            return 2
     elif args.text is not None:
         body = one_line(args.text)
     else:

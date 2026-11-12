@@ -258,6 +258,26 @@ def test_the_line_goes_after_a_wrapped_reasoning_line(repo, clock):
     assert lines[at + 1] == "- Status 2031-01-02 03:04 (aaaa1111): x"
 
 
+def test_a_missing_body_file_exits_2_in_one_line(repo, clock, tmp_path, capsys):
+    before = (repo / "plans" / "stack.md").read_bytes()
+    assert append(repo, "10", "--sid", "aaaa1111",
+                  "--body", str(tmp_path / "none.txt")) == 2
+    err = capsys.readouterr().err
+    assert len(err.strip().splitlines()) == 1 and "Traceback" not in err
+    assert "none.txt" in err
+    assert (repo / "plans" / "stack.md").read_bytes() == before
+
+
+def test_a_stack_that_is_not_utf8_exits_2_in_one_line(repo, clock, capsys):
+    path = repo / "plans" / "stack.md"
+    path.write_bytes("## Stack\n### 1. Caf\xe9 [aaaa1111]\n- What.\n".encode("cp1252"))
+    before = path.read_bytes()
+    assert append(repo, "1", "--sid", "aaaa1111", "--text", "x") == 2
+    err = capsys.readouterr().err
+    assert len(err.strip().splitlines()) == 1 and "Traceback" not in err
+    assert path.read_bytes() == before
+
+
 def test_an_unknown_frame_writes_nothing(repo, clock):
     before = (repo / "plans" / "stack.md").read_bytes()
     assert append(repo, "99", "--sid", "aaaa1111", "--text", "x") == 2
