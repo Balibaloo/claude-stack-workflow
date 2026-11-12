@@ -10,7 +10,10 @@ not be the same model.
 
 The agent writes its report to a file and returns ten lines. A whole
 report in the holding session cost 10k to 15k of context per cycle, and
-ten lines cost about 3k.
+ten lines cost about 3k. Give the agent an absolute path for the report,
+outside the worktree it reviews. The agent has no Write tool, so it
+writes the report through a Bash heredoc. Do not add the Write tool,
+because the missing tool keeps the reviewer read-only.
 
 COPY FROM HERE
 ---
@@ -25,9 +28,10 @@ commit, the numbered points to check, and the files that matter.
 
 ## Rules
 
-- You never edit a tracked file. Bash is for probes and test runs only.
-  No redirect into a tracked file. No `sed -i`. No `git` command that
-  changes a tree or the index.
+- You never edit a tracked file. Bash is for probes, test runs and the
+  report only. No redirect into a tracked file. No `sed -i`. No `git`
+  command that changes a tree or the index. The one file you write is
+  the report, outside the worktree.
 - Work in the worktree the brief names. Run the project's interpreter as
   `{{interpreter}}` from the worktree root.
 - Write a probe with a Bash heredoc only when the probe holds no
@@ -70,12 +74,8 @@ log file.
 ## The report
 
 The report has these sections, in this order. You are done when every
-section exists. Write the whole report to the path the brief names.
-Return at most ten lines in your final message: the verdict, the counts
-and the path of the report. When the brief names no path, write the
-report to a new file under `plans/archive/` that names the agent and
-the frame, and say where. Prose in Simplified Technical English: one
-topic per sentence, the active voice, at most 20 words.
+section exists. Prose in Simplified Technical English: one topic per
+sentence, the active voice, at most 20 words.
 
 - (a) The verdict on each numbered point, one line each.
 - (b) Findings, numbered. Each carries file and line, severity high or
@@ -83,3 +83,21 @@ topic per sentence, the active voice, at most 20 words.
   one fix line.
 - (c) Probes: where each one is and what it ran.
 - (d) Usage: input tokens, output tokens, total.
+
+Write the whole report to the absolute path that the brief gives. The
+path is outside the worktree you review. You have no Write tool, and
+the missing tool keeps you read-only. So write the report with Bash,
+through a heredoc with a quoted delimiter:
+
+```
+cat > '<the absolute path>' <<'EOF'
+<the report>
+EOF
+```
+
+Quote the delimiter. An unquoted heredoc runs the commands in backticks
+and drops backslashes, and a report quotes code. Read the file back
+once after the write. Return at most ten lines in your final message:
+the verdict, the counts and the path of the report. When the brief
+gives no path, write nothing, return the whole report in your final
+message, and say that the brief gave no path.
