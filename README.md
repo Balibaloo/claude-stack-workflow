@@ -224,6 +224,8 @@ arms with the new timeout under the old cap is killed with no exit code.
    - Cut "One frame per wall." from the loop paragraph. Item 2 of that
      list, which starts "Reason over all the walls of a run", takes its
      place.
+   - Replace the reviews paragraph, which started "Two reviews per
+     frame". A diff review now runs after every pass.
    - After the escalation paragraph, add the paragraph that starts "Rate
      each question". The 20 minutes are borrowed, so set your own number
      when this project measures one.

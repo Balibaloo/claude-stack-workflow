@@ -271,11 +271,12 @@ Ask the map tool before you grep: `{{map command}} fn|file <name>`
 prints where a function is defined and called, or what a file defines,
 in a few lines. An agent's brief carries the same line.
 
-Two reviews per frame. A design review reads the scope report and the
-design record before any code, about 100k. One read-only diff review
-runs at the frame's end, on a worktree at the commit, before the
-end-to-end run. The diff review is for a frame that touches
-{{risky surface}}. Fewer, sharper points per review.
+A design review reads the scope report and the design record before
+any code, about 100k. A read-only diff review runs after every pass,
+whatever the pass touches, on a worktree at the pass's commit. The last
+one runs before the end-to-end run. Four reviews in one frame once each
+found a defect that the pass before had left. Fewer, sharper points per
+review.
 
 A frame that touches {{risky surface}} ends on an end-to-end run of the
 real system: {{end-to-end run}}. The run covers the phases the frame
