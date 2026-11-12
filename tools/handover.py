@@ -670,9 +670,15 @@ def cmd_standby(args: argparse.Namespace, box: Box) -> int:
         return 2
 
     t, iso = _now()
+    # The enrolled name wins over --name. The hook writes the name the
+    # harness answers to, and a session cannot read its own peer name
+    # before it lists its peers. On 2026-09-20 a session typed a
+    # description, and its row then named nobody a message could reach.
+    # The enrolment is already read above, for the ceiling.
+    known = enrolled.get("name") or ""
     state = {
         "sid": args.sid,
-        "name": args.name or "",
+        "name": known or args.name or "",
         "host": socket.gethostname(),
         "watcher_pid": os.getpid(),
         "since": t,

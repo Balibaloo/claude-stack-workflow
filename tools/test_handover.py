@@ -847,11 +847,15 @@ def test_a_standby_that_really_died_still_reads_stale(box):
     assert run(box, "peers") == 1
 
 
-def enrol(box_path, sid, est):
-    """Write what the context hook writes, so a row carries an estimate."""
+def enrol(box_path, sid, name=None, est=None):
+    """Write what the context hook writes, so a test can arm against it.
+
+    The hook's row carries a peer name and a context count. One test needs
+    the name and another needs the count, so each is an optional keyword.
+    """
     api = handover.Box(box_path)
     _write_json(api.sessions / (sid + ".json"),
-                {"sid": sid, "name": "peer-" + sid[:4], "est": est,
+                {"sid": sid, "name": name or "peer-" + sid[:4], "est": est,
                  "turns": 1, "t": time.time()})
 
 
@@ -862,9 +866,9 @@ def test_a_frame_goes_to_the_oldest_standby_under_the_ceiling(box):
     arm(box, "bbbb2222")          # next oldest, and able to
     time.sleep(0.05)
     arm(box, "cccc3333")          # freshest, and should stay unspent
-    enrol(box, "aaaa1111", 340)
-    enrol(box, "bbbb2222", 210)
-    enrol(box, "cccc3333", 20)
+    enrol(box, "aaaa1111", est=340)
+    enrol(box, "bbbb2222", est=210)
+    enrol(box, "cccc3333", est=20)
 
     assert run(box, "hand", "--frame", "7", "--commit", "abc1234",
                "--confirm", "0.1") == 4
@@ -881,7 +885,7 @@ def test_an_unknown_estimate_is_the_cleanest_standby_there_is(box):
     a live session enrolled with est null and turns zero.
     """
     arm(box, "aaaa1111")
-    enrol(box, "aaaa1111", None)
+    enrol(box, "aaaa1111", est=None)
     row = [r for r in handover.Box(box).queue(handover.STALE)
            if r["sid"] == "aaaa1111"][0]
     assert row["over"] is False and row["free"] is True
@@ -892,7 +896,7 @@ def test_an_unknown_estimate_is_the_cleanest_standby_there_is(box):
 def test_a_reserve_that_is_all_too_full_is_a_drought(box, capsys):
     """And it must not read as an empty reserve, which is a different fact."""
     arm(box, "aaaa1111")
-    enrol(box, "aaaa1111", 340)
+    enrol(box, "aaaa1111", est=340)
     capsys.readouterr()
 
     assert run(box, "hand", "--frame", "7", "--commit", "abc1234") == 5
@@ -905,7 +909,7 @@ def test_a_reserve_that_is_all_too_full_is_a_drought(box, capsys):
 
 def test_a_session_past_the_ceiling_leaves_instead_of_arming(box, capsys):
     """A seat it holds is a seat no hand-off can use."""
-    enrol(box, "dddd4444", 355)
+    enrol(box, "dddd4444", est=355)
     capsys.readouterr()
     assert run(box, "standby", "--sid", "dddd4444", "--wait", "1") == 2
     out = capsys.readouterr().out
@@ -936,6 +940,24 @@ def test_a_typed_name_still_serves_a_checkout_with_no_hook(box):
     row = [r for r in handover.Box(box).queue(handover.STALE)
            if r["sid"] == "aaaa1111"][0]
     assert row["name"] == "typed-only"
+
+
+def test_the_enrolled_name_beats_a_typed_one_in_the_stored_row(box):
+    """The standby writes the hook's name into its own row, not the guess.
+
+    The table above merges the hook's name at print time. A script reads
+    the stored row, so the row itself must carry the address that works.
+    """
+    enrol(box, "aaaa1111", "peer-52")
+    arm(box, "aaaa1111", name="a-description-not-a-name")
+    assert peer(box, "aaaa1111")["name"] == "peer-52", \
+        "the row named nobody a message could reach"
+
+
+def test_a_typed_name_is_kept_in_the_row_when_no_hook_enrolled_it(box):
+    """The fallback matters on a checkout whose hook is not installed."""
+    arm(box, "aaaa1111", name="typed-only")
+    assert peer(box, "aaaa1111")["name"] == "typed-only"
 
 
 def test_a_holder_is_not_printed_as_stale(box, capsys):
