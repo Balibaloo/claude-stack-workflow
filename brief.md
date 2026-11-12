@@ -229,10 +229,11 @@ writes the actual beside the estimate, walls counted apart.
 In a loop, you diagnose and write the fix brief. A cause goes on the
 stack only after the evidence of the failing run is read: what ran, what
 came back, and what it produced. What you changed that day is the last
-suspect. An agent implements, re-runs the touched tests, and returns the
-diff and the result. You review from a context that never read the
-files. A one-line change is the exception. Bulk reading goes to agents.
-One status line per cycle.
+suspect. An agent implements and re-runs the touched tests. It writes
+its whole report to the file that its brief names, and returns ten
+lines: the verdict, the counts and the path. You review from a context
+that never read the files. A one-line change is the exception. Bulk
+reading goes to agents. One status line per cycle.
 
 A wall moves to its fix in this order:
 
@@ -284,7 +285,8 @@ in a few lines. An agent's brief carries the same line.
 
 A design review reads the scope report and the design record before
 any code, about 100k. A read-only diff review runs after every pass,
-whatever the pass touches, on a worktree at the pass's commit. The last
+whatever the pass touches, on a worktree at the pass's commit. Its brief
+gives an absolute path for the report, outside that worktree. The last
 one runs before the end-to-end run. Four reviews in one frame once each
 found a defect that the pass before had left. Fewer, sharper points per
 review.

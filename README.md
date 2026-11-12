@@ -167,7 +167,7 @@ other reasons. `meta/CONTRACTS.md` carries the numbers.
 
 ### The release of 2026-11
 
-This release changes eight things. The standby watcher waits one day, and
+This release changes nine things. The standby watcher waits one day, and
 a setting raises the harness cap to match. The reclaim clock starts at
 the claim. The enrolled peer name wins in the stored row. A decision
 that waits on the Principal pushes to the phone. The brief names both
@@ -175,9 +175,11 @@ meanings of exit 2 of `standby`. The sender hands off at 350k, keeps the
 last 50k for the taker, and stops when the taker sends the word
 released. A wake runs the state print in place of a read of the stack.
 The status tool writes every status line with the clock's time and
-commits the stack alone. The brief also gains eight rules that the
-workflow's source learned after the kit was cut: on a question to the
-Principal, on a wall and its fix, on the reviews, and on the tools.
+commits the stack alone. The implementer and the reviewer write the
+whole report to a file and return ten lines. The brief also gains eight
+rules that the workflow's source learned after the kit was cut: on a
+question to the Principal, on a wall and its fix, on the reviews, and on
+the tools.
 
 Do the steps in this order. The order matters, because a watcher that
 arms with the new timeout under the old cap is killed with no exit code.
@@ -229,6 +231,9 @@ arms with the new timeout under the old cap is killed with no exit code.
    - After the loop paragraph, add the list that starts "A wall moves to
      its fix in this order". In the escalation paragraph, add the two
      sentences that start "A question opens with the provenance".
+   - In the loop paragraph, replace the sentence that starts "An agent
+     implements, re-runs" with the two sentences that start "An agent
+     implements and re-runs".
    - Cut "One frame per wall." from the loop paragraph. Item 2 of that
      list, which starts "Reason over all the walls of a run", takes its
      place.
@@ -250,16 +255,23 @@ arms with the new timeout under the old cap is killed with no exit code.
    the `**2**` item of the exit list with those of
    `meta/commands/standby.md`. Replace the `{{interpreter}}` slot in the
    text you moved.
-7. **The records.** In `plans/operating-facts.md`, replace the bullet on
+7. **The agents.** The implementer and the reviewer now write the whole
+   report to a file and return ten lines. Diff `meta/agents/implementer.md`
+   and `meta/agents/reviewer.md` against the files in `.claude/agents/`,
+   from the "COPY FROM HERE" line down. Replace the section "The report"
+   of each, and the first item of the reviewer's Rules. Replace every
+   `{{slot}}` in the text you moved. Skip an agent that this project has
+   not installed yet.
+8. **The records.** In `plans/operating-facts.md`, replace the bullet on
    the cost of a re-arm and the bullet on how long the harness lets a
    background process live. Take both from the "The peers and the
    reserve" section of `meta/operating-facts.md`. They are borrowed, so
    keep their marks until this project measures its own.
-8. **The reserve.** A session reads the settings at its start. So a
+9. **The reserve.** A session reads the settings at its start. So a
    standby that was open before step 1 still runs under the old cap, and
    its watcher is killed at two hours or less. Run `peers`, name those
    standbys to the Principal, and ask for fresh windows in their place.
-9. **Prove it, then say so.** Arm one fresh standby and check `peers`
+10. **Prove it, then say so.** Arm one fresh standby and check `peers`
    after more than two hours. Its beat must still be a number of seconds.
    Then hand that standby a frame with `--sender` set. The take must
    print `from <sender id> (<peer name>)` and the line that names the
