@@ -169,7 +169,8 @@ frames of the stack spent 35k of context. The print costs about 3k.
    `### <n>. <name>` and ends at the next heading. The frames stand
    between `## Stack` and `## Parked`. A heading inside a fenced code
    block is not a frame, so the template's worked example is never read
-   as a frame.
+   as a frame. A bullet can wrap, so read its continuation lines joined
+   to it before you read a field.
 3. Name the holder by the session id in the heading, as `[a1b2c3d4]` or
    `(a1b2c3d4)`. The last id in the heading holds the frame.
 4. Print four lines for each frame a holder has: the heading, the first
