@@ -184,7 +184,10 @@ frames of the stack spent 35k of context. The print costs about 3k.
    sections: what closed, what was decided under an assumption, what
    waits on the Principal, and what the Principal ruled. A closed frame
    is read from `plans/archive/stack-<date>.md`. A decision under an
-   assumption carries the mark `(assumed: ...)` in its status line.
+   assumption carries the mark `(assumed: ...)` in its status line. The
+   brief tells a session to write that mark when it continues on a
+   recommended answer that got no reply, and to show this page to the
+   Principal on their return.
 7. Keep the return page to one screen. Cut the oldest rows of the
    closed, the assumed and the ruled sections, and say how many went.
    Never cut the waits, because the Principal must answer them.

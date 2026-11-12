@@ -309,23 +309,32 @@ repair named, and never repaired in silence.
 
 Rate each question `[high]`, `[med]` or `[low]`, and write the rating as
 its first word. A question is low when its answer sets only an order, a
-number or a name, and no edit depends on it. Send a low question in a
-notification with its recommended answer, and arm a background timer of
-20 minutes (borrowed). Start no work on it before the reply or the
-timer, then continue on the reply or on the recommended answer. A high
-or a medium question waits for the reply. Two low questions once kept
-a session idle for 5 hours 18 minutes.
+number or a name, and no edit depends on it. Put a low question in the
+terminal reply with its recommended answer, and send one notification
+that points to it. Then arm a background timer of 20 minutes
+(borrowed). Start no work on it before the reply or the timer, then
+continue on the reply or on the recommended answer. A high or a medium
+question waits for the reply. Two low questions once kept a session
+idle for 5 hours 18 minutes.
+
+When you continue on the recommended answer, write the decision in the
+status line with the mark `(assumed: why)`. The mark keeps the decision
+open, because silence is not consent, and {{principal}} can reverse it.
+`{{interpreter}} tools/state.py --since <date>` prints every assumed
+decision since that date. When {{principal}} returns, show them that
+print.
 
 Tell a question to {{principal}} as a story: one concrete situation,
 everyday names, today's behaviour, and what happens next under each
-option. The full question goes in the terminal reply, and a
-notification only rings. A request for thoughts gets an answer and
-moves nothing. Check a claim of {{principal}}'s about the state of the
-world against the records and the code before you act on it.
+option. The full question goes in the terminal reply, and the
+notification only points to it. A request for thoughts gets an answer
+and moves nothing. Check a claim of {{principal}}'s about the state of
+the world against the records and the code before you act on it.
 
 Records: a conclusion goes to a record when it forms. Every conclusion
 carries a mark, each with a reason the size of a commit headline:
-(observed: where and when), (reasoned: why), or (ruled: why). An
+(observed: where and when), (reasoned: why), (ruled: why), or (assumed:
+why) for a decision on a recommended answer that got no reply. An
 observation carries its date because an observation ages. A check you ran
 an hour ago and quote now without its date is a prediction wearing the
 word observed, and a prediction never gates. An assertion about what a

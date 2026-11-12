@@ -240,8 +240,11 @@ arms with the new timeout under the old cap is killed with no exit code.
    - After the escalation paragraph, add the paragraph that starts "Rate
      each question". The 20 minutes are borrowed, so set your own number
      when this project measures one.
-   - After that paragraph, add the paragraph that starts "Tell a
-     question to".
+   - After that paragraph, add the paragraph that starts "When you
+     continue on the recommended answer". Add the paragraph that starts
+     "Tell a question to" after it.
+   - In the Records paragraph, add the mark `(assumed: why)` to the list
+     of marks.
    - Replace every `{{slot}}` in the text you moved.
 6. **The command.** In `.claude/commands/standby.md`, replace step 2 and
    the `**2**` item of the exit list with those of
