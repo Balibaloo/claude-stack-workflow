@@ -66,9 +66,11 @@ Find which release the repository runs before you start. A repository
 with no `tools/handover.py` predates the hand-off, so do steps 1 to 7
 below. A repository that has the tool and hands off at 400k predates the
 release of 2026-11, so do only the steps of "The release of 2026-11"
-further down. A repository of the first kind also takes step 4 of that
-release, and the bullets of its step 5 that name the state print and the
-status tool.
+further down. A repository of the first kind then also takes steps 1, 4
+and 7 of that release, and its step 5 whole. Step 1 brings
+`BASH_MAX_TIMEOUT_MS`, the two push keys and the allow rules, and step 5
+brings the eight new rules of the brief. Skip a bullet of step 5 only
+when steps 1 to 7 below already did it.
 
 Do the steps in this order. The order matters, because step 1 stops step
 3 from parking a session.
