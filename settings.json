@@ -2,6 +2,8 @@
   "env": {
     "BASH_MAX_TIMEOUT_MS": "86400000"
   },
+  "agentPushNotifEnabled": true,
+  "inputNeededNotifEnabled": true,
   "permissions": {
     "allow": [
       "Bash(python tools/handover.py:*)"
@@ -13,7 +15,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "echo '{\"hookSpecificOutput\":{\"hookEventName\":\"UserPromptSubmit\",\"additionalContext\":\"Standing instruction for this turn: when you reach what feels like a stopping point, ask whether you are actually blocked. If you are not blocked, continue working. If you believe you are really blocked, use your best reasoning about whether the blocker is genuinely one for the user to resolve before you stop.\"}}'",
+            "command": "echo '{\"hookSpecificOutput\":{\"hookEventName\":\"UserPromptSubmit\",\"additionalContext\":\"Standing instruction for this turn: when you reach what feels like a stopping point, ask whether you are actually blocked. If you are not blocked, continue working. If you believe you are really blocked, use your best reasoning about whether the blocker is genuinely one for the user to resolve before you stop. When the blocker is a decision only the Principal can make, do not stop silently. Ask it with AskUserQuestion, which pushes to the phone by itself, or send one PushNotification that names the decision and your recommended answer. One notification per stop, never one per question.\"}}'",
             "timeout": 10
           },
           {
