@@ -440,6 +440,14 @@ Nothing works before these five exist. Write them in this order.
    decision that only the Principal can make, so the Principal learns of
    a blocked frame away from the terminal.
 
+**When the brief grows, split it.** The brief of the workflow's source
+grew to 75 rules in 584 lines, and the source split it on 2026-10-18.
+`CLAUDE.md` kept the Principal's intent in their own dated words and the
+context warnings, and the file fell to 314 lines. A second page took the
+rules, keyed by the moment each one fires at, each with its origin. A
+session reads only the moment it is at. Make the same split when your
+brief grows, and check it with the Principal first.
+
 Create `plans/archive/` now. A closed frame moves there, and so do the
 grill record, every scope report, and every design record.
 
