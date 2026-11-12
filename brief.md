@@ -227,13 +227,18 @@ came back, and what it produced. What you changed that day is the last
 suspect. An agent implements, re-runs the touched tests, and returns the
 diff and the result. You review from a context that never read the
 files. A one-line change is the exception. Bulk reading goes to agents.
-One frame per wall. One status line per cycle.
+One status line per cycle.
 
 A wall moves to its fix in this order:
 
 1. Every new wall gets a provenance read before its first fix: the
    ruling or the build that made the mechanism, and when.
-2. One agent reads the issue with no cause in its brief, and counts its
+2. Reason over all the walls of a run and their provenances before you
+   plan any one, and take the biggest root first. A wall that matches a
+   frame not yet built opens no new frame. That frame moves to the front
+   with the new count. Seven of ten walls of one run once matched older
+   frames.
+3. One agent reads the issue with no cause in its brief, and counts its
    reach: every place with the same gap. The fix covers the reach.
    Fourteen frames in a row once fixed none of their walls at the
    source.
