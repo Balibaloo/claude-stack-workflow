@@ -268,10 +268,11 @@ A change that is the same edit in more than three files is a script.
 Write the script with the Write tool and run it. Print the touched
 files. Read the diff once, for the judgement cases. An agent starts a
 sub-agent only when its brief allows it. The brief gives the sub-agent a
-token cap. The agent's report carries the sub-agent's usage. A step that
-a session must remember at a moment is a defect. A tool does the step or
-prints the next one, and never refuses the session. Two refusals built
-into one tool came out the same day, on {{principal}}'s word.
+token cap. The agent's report carries the sub-agent's usage. When a
+session forgets one step again and again, move the step into a tool. The
+tool does the step or prints the next one. Do not build a tool that
+refuses a judgement of the session. Two such refusals came out of one
+tool on the day they went in (borrowed).
 
 An agent runs the touched test files first, and the full suite once at
 the end of a pass: `{{gate command}}`. The assistant runs the suite
