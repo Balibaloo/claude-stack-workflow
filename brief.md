@@ -302,9 +302,9 @@ touches the composition, or the budget is spent. Before any question
 goes to {{principal}}, an agent searches the records and the session
 transcripts for a prior ruling. It also tests the recommended answer
 against the evidence. A question that the search answers is not asked,
-and a blocked frame asks only what the records leave open. On five
-recorded occasions, a question reached {{principal}} that the records
-already answered. A question opens with the provenance of its issue. A
+and a blocked frame asks only what the records leave open. Where the
+workflow was built, a question reached the Principal five times that the
+records already answered (borrowed). A question opens with the provenance of its issue. A
 departure from a ruling of {{principal}}'s is still asked, with the
 repair named, and never repaired in silence.
 
