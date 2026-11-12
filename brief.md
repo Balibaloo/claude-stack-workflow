@@ -280,6 +280,15 @@ and a blocked frame asks only what the records leave open. On five
 recorded occasions, a question reached {{principal}} that the records
 already answered.
 
+Rate each question `[high]`, `[med]` or `[low]`, and write the rating as
+its first word. A question is low when its answer sets only an order, a
+number or a name, and no edit depends on it. Send a low question in a
+notification with its recommended answer, and arm a background timer of
+20 minutes (borrowed). Start no work on it before the reply or the
+timer, then continue on the reply or on the recommended answer. A high
+or a medium question waits for the reply. Two low questions once kept
+a session idle for 5 hours 18 minutes.
+
 Records: a conclusion goes to a record when it forms. Every conclusion
 carries a mark, each with a reason the size of a commit headline:
 (observed: where and when), (reasoned: why), or (ruled: why). An
