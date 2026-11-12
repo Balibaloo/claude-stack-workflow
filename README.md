@@ -227,6 +227,8 @@ arms with the new timeout under the old cap is killed with no exit code.
    - Add item 4 of that list, which starts "Before pass 1 of a fix".
    - Replace the reviews paragraph, which started "Two reviews per
      frame". A diff review now runs after every pass.
+   - At the end of the script paragraph, add the three sentences that
+     start "A step that a session must remember".
    - After the escalation paragraph, add the paragraph that starts "Rate
      each question". The 20 minutes are borrowed, so set your own number
      when this project measures one.
