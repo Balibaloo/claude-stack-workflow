@@ -229,6 +229,15 @@ diff and the result. You review from a context that never read the
 files. A one-line change is the exception. Bulk reading goes to agents.
 One frame per wall. One status line per cycle.
 
+A wall moves to its fix in this order:
+
+1. Every new wall gets a provenance read before its first fix: the
+   ruling or the build that made the mechanism, and when.
+2. One agent reads the issue with no cause in its brief, and counts its
+   reach: every place with the same gap. The fix covers the reach.
+   Fourteen frames in a row once fixed none of their walls at the
+   source.
+
 {{builder model}} builds, {{judge model}} judges. An implementer or a
 sweeper runs on {{builder model}}. The session that holds the frame is
 {{judge model}}. It judges by working back from the output: the suite on
@@ -278,7 +287,9 @@ transcripts for a prior ruling. It also tests the recommended answer
 against the evidence. A question that the search answers is not asked,
 and a blocked frame asks only what the records leave open. On five
 recorded occasions, a question reached {{principal}} that the records
-already answered.
+already answered. A question opens with the provenance of its issue. A
+departure from a ruling of {{principal}}'s is still asked, with the
+repair named, and never repaired in silence.
 
 Rate each question `[high]`, `[med]` or `[low]`, and write the rating as
 its first word. A question is low when its answer sets only an order, a

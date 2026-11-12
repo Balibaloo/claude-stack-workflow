@@ -218,6 +218,9 @@ arms with the new timeout under the old cap is killed with no exit code.
      line" and ends "after every other change too".
    - In the escalation paragraph, add the sentences that start "Before
      any question goes to".
+   - After the loop paragraph, add the list that starts "A wall moves to
+     its fix in this order". In the escalation paragraph, add the two
+     sentences that start "A question opens with the provenance".
    - After the escalation paragraph, add the paragraph that starts "Rate
      each question". The 20 minutes are borrowed, so set your own number
      when this project measures one.
