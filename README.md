@@ -62,6 +62,12 @@ against the defect in your own port rather than widening what the
 Principal ruled. One destination did exactly that, and wrote the guard
 into its frame.
 
+Find which release the repository runs before you start. A repository
+with no `tools/handover.py` predates the hand-off, so do steps 1 to 7
+below. A repository that has the tool and hands off at 400k predates the
+release of 2026-11, so do only the steps of "The release of 2026-11"
+further down.
+
 Do the steps in this order. The order matters, because step 1 stops step
 3 from parking a session.
 
@@ -81,7 +87,7 @@ Do the steps in this order. The order matters, because step 1 stops step
 
 2. **The tool.** Copy `meta/tools/handover.py` to `tools/handover.py` and
    `meta/tools/test_handover.py` beside your other tests. Run them once:
-   38 tests, a few seconds. Add `.handover/` to `.gitignore`.
+   64 tests, under a minute. Add `.handover/` to `.gitignore`.
 
 3. **The hook.** Diff before you merge. Run
 
@@ -154,6 +160,69 @@ If your `plans/` records say that peer messaging is broken, that sentence
 is false and it was measured false. Correct it with a dated line, and say
 in the correction that a message does arrive and is the wrong carrier for
 other reasons. `meta/CONTRACTS.md` carries the numbers.
+
+### The release of 2026-11
+
+This release changes six things. The standby watcher waits one day, and
+a setting raises the harness cap to match. The reclaim clock starts at
+the claim. The enrolled peer name wins in the stored row. A decision
+that waits on the Principal pushes to the phone. The brief names both
+meanings of exit 2 of `standby`. The sender hands off at 350k, keeps the
+last 50k for the taker, and stops when the taker sends the word
+released.
+
+Do the steps in this order. The order matters, because a watcher that
+arms with the new timeout under the old cap is killed with no exit code.
+
+1. **The settings, first.** Merge three things into
+   `.claude/settings.json` from `meta/settings.json`: the `env` block
+   with `BASH_MAX_TIMEOUT_MS`, the keys `agentPushNotifEnabled` and
+   `inputNeededNotifEnabled`, and the new end of the standing instruction
+   in the first `UserPromptSubmit` hook. Merge into the blocks that are
+   already there. Never replace the file.
+2. **The tool.** Diff `meta/tools/handover.py` against
+   `tools/handover.py`, and the two test files, the same way as step 3
+   above. Replace each file whole unless the diff proves local content.
+   Run the tests once: 64 tests, under a minute. A watcher that armed
+   before the copy runs the old code until its wait ends. The new
+   reclaim reads the age of its claims from the file time, so that
+   watcher needs no step.
+3. **The hook.** Diff `meta/hooks/context_count.py` against yours, as in
+   step 3 above. This release changes the `level` function and the
+   thresholds in the module text. Run the check by hand again, and check
+   that `peers` lists no test row.
+4. **The brief.** In your `CLAUDE.md`, take these from `meta/brief.md`:
+   - Replace the `400k:` bullet with the `350k:` bullet, whole. The
+     bullet ends with the new paragraph that starts "A hand-off is also
+     a dialogue". Its exit `0:` item and the paragraph that starts "A
+     hand-off gives away the whole stack" changed as well.
+   - Replace the paragraph that starts "Why the count arrives every
+     turn".
+   - Replace the paragraph of the standby section that starts "Run it
+     with the Bash tool".
+   - Replace the `2:` item of the standby exit list.
+   - Add the last six sentences of step 1 of `On wake:`, which start
+     "Exit 0 also prints the sender's peer name".
+   - Replace every `{{slot}}` in the text you moved.
+5. **The command.** In `.claude/commands/standby.md`, replace step 2 and
+   the `**2**` item of the exit list with those of
+   `meta/commands/standby.md`. Replace the `{{interpreter}}` slot in the
+   text you moved.
+6. **The records.** In `plans/operating-facts.md`, replace the bullet on
+   the cost of a re-arm and the bullet on how long the harness lets a
+   background process live. Take both from the "The peers and the
+   reserve" section of `meta/operating-facts.md`. They are borrowed, so
+   keep their marks until this project measures its own.
+7. **The reserve.** A session reads the settings at its start. So a
+   standby that was open before step 1 still runs under the old cap, and
+   its watcher is killed at two hours or less. Run `peers`, name those
+   standbys to the Principal, and ask for fresh windows in their place.
+8. **Prove it, then say so.** Arm one fresh standby and check `peers`
+   after more than two hours. Its beat must still be a number of seconds.
+   Then hand that standby a frame with `--sender` set. The take must
+   print `from <sender id> (<peer name>)` and the line that names the
+   word released. Report which checks held, and push a frame for any
+   check that did not.
 
 Delete `meta/` again when these steps are done.
 
