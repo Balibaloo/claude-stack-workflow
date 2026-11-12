@@ -64,7 +64,11 @@ its session. Read the task output, and act on the exit code.
   hand-off waits. A frame is addressed to you.
 - **1**: your registration is gone, so you left the reserve. Do not arm
   again. Say so and stop.
-- **2**: you hold a frame already. Report which frame and stop.
+- **2**: one of two things, and the output says which. You hold a frame
+  already, so report which frame and stop. Or you read at or past 300k, so
+  the command took your seat back. A session there takes no new frame, so
+  it is handed none. Tell the Principal a window is needed, and do not arm
+  again.
 
 ## If step 2 says a hand-off was already waiting
 

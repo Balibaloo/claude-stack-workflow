@@ -141,8 +141,10 @@ On that wake, read the task output and act on the exit code.
 - 3: the wait ran out. Arm the watcher again. Stop.
 - 1: your registration is gone, so you left the reserve. Do not arm
   again. Ask {{principal}} for work.
-- 2: you hold a frame already, so you are not a standby. Report the frame
-  you hold and stop.
+- 2: one of two things, and the output says which. You hold a frame
+  already, so you are not a standby. Report the frame you hold and stop.
+  Or you read at or past 300k, and the command took your seat back. Tell
+  {{principal}} that a window is needed, and do not arm again.
 
 The peers table has a `handed` column. It names the frame the mailbox
 delivered to a session, and never the frame that session holds now. The
