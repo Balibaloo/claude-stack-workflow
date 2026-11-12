@@ -85,8 +85,9 @@ last three frames whenever a frame that changes the workflow closes.
 - A full suite run read inside an agent as raw test output: about 25k.
   Through a gate: about 1k in the agent, and about 6k of the assistant's
   context per run. (borrowed)
-- One frame in the assistant's own context, claim to close, two reviews
-  and three implementer passes included: about 120k. (borrowed)
+- One frame in the assistant's own context, claim to close, three
+  implementer passes and a diff review after every pass included: about
+  120k. (borrowed)
 - A design record written by the assistant: about 8k of output. A status
   line: about 1k. (borrowed)
 

@@ -137,8 +137,9 @@ your own.
      contract is fixed before an implementer reads it.
   3. The refresh is built with a pinned test: 110k. Buys: a change's
      own symbols are visible to every later read.
-  4. A diff review on a worktree at the commit, its fixes in: 110k.
-     Buys: the change is read by a context that never wrote it.
+  4. A diff review after every pass, on a worktree at the pass's
+     commit, its fixes in: 110k. Buys: the change is read by a context
+     that never wrote it.
   Total: 350k in agents, about 120k in this context.
 - Waits on: nothing.
 - Reasoning: the grill of 2026-09-17.
