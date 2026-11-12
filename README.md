@@ -216,6 +216,8 @@ arms with the new timeout under the old cap is killed with no exit code.
    - In the Records paragraph, replace the sentence on the clock and the
      sentence on the stack commit. The new text starts "Write each status
      line" and ends "after every other change too".
+   - In the escalation paragraph, add the sentences that start "Before
+     any question goes to".
    - Replace every `{{slot}}` in the text you moved.
 6. **The command.** In `.claude/commands/standby.md`, replace step 2 and
    the `**2**` item of the exit list with those of

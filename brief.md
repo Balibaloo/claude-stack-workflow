@@ -272,7 +272,13 @@ starts in the main checkout.
 
 Escalate as a blocked frame: the question and a recommended answer.
 Triggers: a ruling is needed, a wall survives three cycles, a change
-touches the composition, or the budget is spent.
+touches the composition, or the budget is spent. Before any question
+goes to {{principal}}, an agent searches the records and the session
+transcripts for a prior ruling. It also tests the recommended answer
+against the evidence. A question that the search answers is not asked,
+and a blocked frame asks only what the records leave open. On five
+recorded occasions, a question reached {{principal}} that the records
+already answered.
 
 Records: a conclusion goes to a record when it forms. Every conclusion
 carries a mark, each with a reason the size of a commit headline:
