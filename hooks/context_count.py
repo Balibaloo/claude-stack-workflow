@@ -25,8 +25,9 @@ message can report the count, and on every prompt from 200k upward.
 Below 200k after the wake it prints nothing. Set CONTEXT_ALWAYS=1 to
 print on every prompt.
 
-The thresholds come from the brief: 200k is the first warning, 300k is
-fine, 400k is the hand-off.
+The thresholds come from the brief: 200k is the first warning, 300k
+takes no new frame, and 350k is the hand-off, with the last 50k kept for
+the taker's questions.
 
 A compaction is found by parsing each line as JSON and reading its
 fields. Matching raw text is wrong: any message that quotes the marker
@@ -138,8 +139,9 @@ def scan(path):
 
 def level(est):
     """Return the threshold label for an estimate."""
-    if est >= 400:
-        return "hand off now"
+    if est >= 350:
+        return ("finish the held frame and hand off, keep the last 50k"
+                " for the taker")
     if est >= 300:
         return "finish the frame, take no new work"
     if est >= WARN:

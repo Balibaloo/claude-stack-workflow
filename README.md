@@ -122,7 +122,7 @@ Do the steps in this order. The order matters, because step 1 stops step
    session to list its peers and send each one a liveness probe. That rule
    cannot work and its stated reason was wrong, so replace it:
 
-   - Replace the whole `400k:` bullet with the `400k:` bullet from
+   - Replace the whole `400k:` bullet with the `350k:` bullet from
      `meta/brief.md`.
    - Replace the `300k:` bullet with the one from `meta/brief.md`, which
      adds one command.

@@ -275,11 +275,20 @@ waiting before it cost the standby no tokens.
     the peer name and the context estimate on every prompt. So a session
     that arms no watcher is still reachable by a message. The sender can
     also prefer the cleanest standby.
+20. Carry the sender's address to the taker. The sender hands off at
+    about 350k and keeps the last 50k of its context to answer the taker.
+    So the claim and the vacancy carry the sender's peer name, read from
+    the enrolment at the hand, and the take prints it beside the sender's
+    session id. A claim with no name falls back to the enrolment. The
+    take also prints the release word, because the sender stops only when
+    the taker messages it.
 
 **The rule that goes in the briefs.** Hand off with the command, and
 write the status line from its exit code. A hand-off gives away the whole
-stack and ends the sender's work, and it is never a way to give a task to
-a peer while the sender keeps working. A tool that moves work between
+stack and ends the sender's work on it, and it is never a way to give a
+task to a peer while the sender keeps working. The taker may message the
+sender a context question, and messages it the word released when it
+needs nothing more. The sender answers and never writes first. A tool that moves work between
 sessions will be used to widen a seat unless its own documentation says
 it continues one. A message is never the first
 route and never the only route. Resuming a sub-agent by message is a

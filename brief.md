@@ -28,19 +28,21 @@ three warnings only:
   tell {{principal}} now, in one line, and name the count. This is the
   only warning they get before the hand-off needs a session, and it costs
   one command.
-- 400k: write the status line, commit the stack, then hand the frame off
+- 350k: write the status line, commit the stack, then hand the frame off
   with one command:
 
   ```
   {{interpreter}} tools/handover.py hand --frame <n> --commit <sha> --sender <your session id>
   ```
 
-  The command takes the oldest free standby, writes one claim, and waits
+  Never hand off below 350k while a frame you hold can still move. Keep
+  the last 50k of your context to answer the taker. The command takes the oldest free standby, writes one claim, and waits
   for that session to take the frame. Read the exit code, and write the
   status line from it.
 
   - 0: a named session holds the frame. Write that session id in the
-    status line. Stop.
+    status line. Stop work on the stack, and answer the taker until it
+    messages you the word released.
   - 4: the claim waits unread. Name that session in the status line, and
     say the take never came. The claim returns to the queue by itself, so
     the frame moves again without a person. Stop.
@@ -73,10 +75,10 @@ three warnings only:
   A hand-off is {{principal}}'s assignment, continued. Do not wait for
   {{principal}} to name the peer.
 
-  A hand-off gives away the whole stack and ends your work. You stop. It
-  is never a way to give a task to another session while you keep
-  working. Two sessions on one stack write over each other's records, and
-  the stack stops answering "where are we", which is the one question it
+  A hand-off gives away the whole stack and ends your work on it. It is
+  never a way to give a task to another session while you keep working.
+  Two sessions on one stack write over each other's records, and the
+  stack stops answering "where are we", which is the one question it
   exists for.
 
   So when a frame needs a session and you are not full, push the frame and
@@ -84,11 +86,21 @@ three warnings only:
   and neither does a peer. The reserve exists to continue this seat, and
   not to widen it.
 
+  A hand-off is also a dialogue, and the taker opens it. The take prints
+  your peer name as the address. The taker messages you a context
+  question before it asks {{principal}}. Answer from the last 50k you
+  kept, and change no record. When the taker needs nothing more, it
+  messages you the word released, and you stop. Never write to the taker
+  first. Your message would spend the clean context that the taker holds
+  the frame with.
+
 Why the count arrives every turn: the harness cannot know which turn is
 the last, so it says the number each time. Why you ignore it until 300k:
 your judgement holds to 400k, and below 300k the number changes nothing
-you do. It exists so the hand-off lands at the number the Principal set,
-not on a guess. A peer once handed off at 272k on its own estimate.
+you do. The hand-off at 350k keeps the last 50k of that judgement for
+the taker's questions. The count exists so the hand-off lands at the
+number the Principal set, not on a guess. A peer once handed off at 272k
+on its own estimate.
 
 # Standby duty
 
@@ -173,6 +185,12 @@ On wake:
    now yours. Exit 1 means nothing waits for anybody, so continue. Exit 6
    means a frame waits for you and its file will not open. Run the command
    again in a minute. Take no other work until it opens.
+   Exit 0 also prints the sender's peer name. The sender kept the end of
+   its context for you. Message it a context question before you ask
+   {{principal}}. When you need nothing more, message it the word
+   released. The rule against spending a standby's context still holds.
+   The message goes from the taker to the spent sender, and never the
+   reverse.
 2. Read `plans/composition.md`.
 3. Read the open frames of `plans/stack.md`: yours, and any blocked on
    {{principal}}. Not the closed ones.

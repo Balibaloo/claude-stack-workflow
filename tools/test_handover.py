@@ -135,7 +135,7 @@ def test_one_claim_wakes_exactly_one_standby(box):
 
 
 def test_two_senders_take_two_different_standbys(box):
-    """Two sessions reach 400k together. Neither steals the other's peer."""
+    """Two sessions reach the hand-off line together. Neither steals the other's peer."""
     for sid in ("aaaa1111", "bbbb2222"):
         arm(box, sid)
         time.sleep(0.05)
@@ -1010,3 +1010,72 @@ def test_the_sid_decides_the_address_and_not_the_name(box):
     assert run(box, "hand", "--frame", "7", "--commit", "abc1234",
                "--to", "aaaa1111", "--confirm", "0.1") == 4
     assert claim(box, "aaaa1111").exists()
+
+
+# The dialogue after a hand-off. The taker opens it, and the sender answers.
+
+def hand_and_take(box_path, sender="bbbb2222"):
+    arm(box_path, "aaaa1111")
+    run(box_path, "hand", "--frame", "7", "--commit", "abc1234",
+        "--sender", sender, "--confirm", "0.1")
+    return run(box_path, "take", "--sid", "aaaa1111")
+
+
+def test_take_gives_the_sender_address_and_the_release_word(box, capsys):
+    enrol(box, "bbbb2222", "peer-77")
+    assert hand_and_take(box) == 0
+    out = capsys.readouterr().out
+    assert "from bbbb2222 (peer-77)" in out
+    assert ("Message peer-77 for a context question before you ask the "
+            "Principal. When you need nothing more, message it the word "
+            "released.") in out
+
+
+def test_take_gives_the_sid_alone_when_no_name_is_known(box, capsys):
+    assert hand_and_take(box) == 0
+    out = capsys.readouterr().out
+    assert "Message bbbb2222 for a context question" in out
+
+
+def test_take_names_no_address_when_no_sender_was_given(box, capsys):
+    arm(box, "aaaa1111")
+    run(box, "hand", "--frame", "7", "--commit", "abc1234", "--confirm", "0.1")
+    capsys.readouterr()
+    assert run(box, "take", "--sid", "aaaa1111") == 0
+    out = capsys.readouterr().out
+    assert "from unknown" in out
+    assert "for a context question" not in out
+
+
+def test_the_claim_carries_the_sender_name_and_take_reads_it_first(box, capsys):
+    enrol(box, "bbbb2222", "peer-77")
+    arm(box, "aaaa1111")
+    run(box, "hand", "--frame", "7", "--commit", "abc1234",
+        "--sender", "bbbb2222", "--confirm", "0.1")
+    posted = json.loads(claim(box, "aaaa1111").read_text(encoding="utf-8"))
+    assert posted["sender_name"] == "peer-77"
+    enrol(box, "bbbb2222", "peer-renamed")
+    capsys.readouterr()
+    assert run(box, "take", "--sid", "aaaa1111") == 0
+    assert "Message peer-77 for" in capsys.readouterr().out
+
+
+def test_a_vacancy_carries_the_sender_name_to_its_taker(box, capsys):
+    """A drought must not lose the address the dialogue needs."""
+    enrol(box, "bbbb2222", "peer-77")
+    assert run(box, "hand", "--frame", "7", "--commit", "abc1234",
+               "--sender", "bbbb2222") == 5
+    posted = json.loads(vacancies(box)[0].read_text(encoding="utf-8"))
+    assert posted["sender_name"] == "peer-77"
+    capsys.readouterr()
+    assert run(box, "take", "--sid", "aaaa1111") == 0
+    assert "Message peer-77 for" in capsys.readouterr().out
+
+
+def test_the_text_names_the_350k_hand_and_keeps_the_300k_ceiling():
+    """The leaving session keeps its last 50k to answer the taker."""
+    assert "400k" not in handover.__doc__
+    assert "about 350k" in handover.__doc__ and "last 50k" in handover.__doc__
+    top_help = " ".join(handover.build_parser().format_help().split())
+    assert "at about 350k, keep the last 50k" in top_help
+    assert handover.CEILING == 300
