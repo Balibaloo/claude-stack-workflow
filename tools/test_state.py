@@ -288,6 +288,46 @@ def test_a_sid_in_round_brackets_holds_a_frame(repo, capsys):
     assert "10. The held frame refreshes the index (2026-10-17) (Principal)\n" in out
 
 
+WRAPPED = STACK.replace(
+    "- Meta workflow. The index is stale after a commit (observed: the build).\n",
+    "- Meta workflow. The index is stale after a commit (observed: the\n"
+    "  build), and the second line of the bullet prints.\n").replace(
+    "- Status 2026-10-17 11:00 (peer-01): the second line.\n",
+    "- Status 2026-10-17 11:00 (peer-01): the second line\n"
+    "  wraps to a third line.\n").replace(
+    "- Waits on: the Principal's ruling on the index [med].\n",
+    "- Waits on: the scope report of frame 10, and then a ruling by\n"
+    "  the Principal on the index [med].\n")
+
+
+def test_a_wrapped_bullet_prints_whole(repo, capsys):
+    write(repo, WRAPPED)
+    out = page(repo, "--sid", "aaaa1111", capsys=capsys)
+    assert ("  What: Meta workflow. The index is stale after a commit (observed: "
+            "the build), and the second line of the bullet prints.") in out
+    assert ("  - Status 2026-10-17 11:00 (peer-01): the second line wraps to a "
+            "third line.") in out
+
+
+def test_a_wrapped_wait_that_names_the_principal_on_its_second_line(repo, capsys):
+    write(repo, WRAPPED)
+    out = page(repo, capsys=capsys)
+    decisions = out.split("## Open decisions\n")[1].split("\n\n")[0]
+    assert decisions == ("[med] 11. The open ask waits on the Principal (2026-10-17): "
+                         "the scope report of frame 10, and then a ruling by the "
+                         "Principal on the index [med].")
+
+
+def test_a_wrapped_assumption_prints_on_the_since_page(repo, capsys):
+    write(repo, STACK.replace(
+        "- Status 2026-10-17 11:00 (peer-01): the second line.\n",
+        "- Status 2026-10-18 01:00 (peer-01): the cheap fix runs, and the\n"
+        "  mark wraps (assumed: the Principal takes the cheap fix).\n"))
+    out = page(repo, "--since", "2026-10-17", capsys=capsys)
+    section = out.split("## Decided under assumption")[1].split("## Waits")[0]
+    assert "the mark wraps (assumed: the Principal takes the cheap fix)." in section
+
+
 def test_a_session_with_no_frame_says_so(repo, capsys):
     out = page(repo, "--sid", "cccc3333", capsys=capsys)
     assert "## Held by cccc3333\nNo frame." in out

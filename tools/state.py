@@ -26,6 +26,8 @@ The tool reads the format of the kit's `stack.md` template:
   is read too.
 * A frame's first bullet says what the frame is. The other fields are
   `- Waits on:`, `- Reasoning:` and the status lines.
+* A bullet can wrap. Its continuation runs to the next line that is blank
+  or starts a bullet or a heading, and the tool reads the joined lines.
 * A status line is `- Status <date> <time> (<peer name>): <text>`. The
   time and the peer name can be absent, as on the template's bottom frame.
 * A popped frame moves to `plans/archive/stack-<date>.md`.
@@ -106,8 +108,44 @@ class Frame:
         """
         return "%s. %s" % (self.number, HOLDERS.sub("", self.heading).strip())
 
+    def bullet_end(self, i: int) -> int:
+        """The index of the last line of the bullet that starts at line `i`.
+
+        A bullet can wrap. Its continuation runs to the next line that is
+        blank or starts a bullet or a heading.
+        """
+        while i + 1 < len(self.lines):
+            nxt = self.lines[i + 1]
+            if not nxt.strip() or nxt.startswith("- ") or nxt.startswith("#"):
+                break
+            i += 1
+        return i
+
+    def bullet(self, i: int) -> str:
+        """The bullet that starts at line `i`, its wrapped lines joined."""
+        if not self.lines[i].startswith("- "):
+            return self.lines[i]
+        parts = [self.lines[i].rstrip()]
+        parts += [x.strip() for x in self.lines[i + 1:self.bullet_end(i) + 1]]
+        return " ".join(parts)
+
+    @property
+    def joined(self) -> list[tuple[int, str]]:
+        """Each line with its index, and each wrapped bullet as one line.
+
+        The index is the bullet's first line, so a writer can still find
+        the bullet in the file.
+        """
+        out: list[tuple[int, str]] = []
+        i = 0
+        while i < len(self.lines):
+            out.append((i, self.bullet(i)))
+            i = self.bullet_end(i) + 1 if self.lines[i].startswith("- ") else i + 1
+        return out
+
     def first(self, prefix: str) -> tuple[int, str] | None:
-        for i, line in enumerate(self.lines):
+        """The first bullet that starts with `prefix`, its wrapped lines joined."""
+        for i, line in self.joined:
             if line.startswith(prefix):
                 return i, line
         return None
@@ -126,7 +164,7 @@ class Frame:
         of its own statement, so the status lines are read last.
         """
         hit = self.first("- ")
-        rest = self.lines[1:]
+        rest = [line for _, line in self.joined[1:]]
         for line in ([hit[1]] if hit else []) + \
                 [x for x in rest if not STATUS.match(x)] + \
                 [x for x in rest if STATUS.match(x)]:
@@ -146,13 +184,17 @@ class Frame:
 
     @property
     def statuses(self) -> list[int]:
-        """The indexes of the status lines, in the order of the file."""
-        return [i for i, line in enumerate(self.lines) if STATUS.match(line)]
+        """The indexes of the status lines, in the order of the file.
+
+        An index is the first line of the status bullet. Read the whole
+        status with `bullet`.
+        """
+        return [i for i, line in self.joined if STATUS.match(line)]
 
     @property
     def rating(self) -> str:
         """The rating of the Waits on line first, then of any line, or empty."""
-        for line in [self.waits] + self.lines:
+        for line in [self.waits] + [x for _, x in self.joined]:
             m = RATING.search(line)
             if m:
                 word = m.group(1) or m.group(2)
@@ -253,7 +295,7 @@ def print_frame(frame: Frame, limit: int, out: list[str]) -> None:
     out.append("  What: %s" % cut(frame.what or "(none)", FIELD_LIMIT))
     out.append("  Waits on: %s" % cut(frame.waits or "(none)", FIELD_LIMIT))
     marks = frame.statuses
-    out.append("  " + (status_line(frame.lines[marks[-1]], limit)
+    out.append("  " + (status_line(frame.bullet(marks[-1]), limit)
                        if marks else "(no status line)"))
 
 
@@ -338,7 +380,7 @@ def dated_statuses(frames: list[tuple[Frame, str]],
     rows = []
     for f, closed in frames:
         for i in f.statuses:
-            line = f.lines[i]
+            line = f.bullet(i)
             when = STATUS.match(line).group(1)
             if when[:10] >= since:
                 rows.append((when, f, closed, line))

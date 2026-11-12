@@ -133,13 +133,9 @@ def insert(text: str, frame: str, line: str) -> tuple[str, int]:
         else:
             bullets = [i for i, b in enumerate(f.lines) if b.startswith("- ")]
             at = bullets[-1] if bullets else 0
-    # A bullet can wrap. Its continuation runs to the next line that is
-    # blank or starts a bullet or a heading, and the new line goes after it.
-    while at + 1 < len(f.lines):
-        nxt = f.lines[at + 1]
-        if not nxt.strip() or nxt.startswith("- ") or nxt.startswith("#"):
-            break
-        at += 1
+    # A bullet can wrap, and the new line goes after its last line. The
+    # state reader joins the same lines, so both tools read one bullet.
+    at = f.bullet_end(at)
     index = f.start + at + 1
     raw.insert(index, line + ("\r" if eol == "\r\n" else ""))
     return "\n".join(raw), index

@@ -246,6 +246,18 @@ def test_the_line_goes_after_a_wrapped_last_status(repo, clock):
     assert lines[at + 2] == ""
 
 
+def test_the_line_goes_after_a_wrapped_reasoning_line(repo, clock):
+    """A frame with no status takes the line after the last wrapped line."""
+    write(repo, STACK.replace(
+        "- Reasoning: `plans/archive/y.md`.\n",
+        "- Reasoning: `plans/archive/y.md`, and the grill of\n  2026-10-17.\n"))
+    append(repo, "11", "--sid", "aaaa1111", "--text", "x", "--no-commit")
+    lines = lines_of(repo)
+    at = lines.index("  2026-10-17.")
+    assert lines[at - 1] == "- Reasoning: `plans/archive/y.md`, and the grill of"
+    assert lines[at + 1] == "- Status 2031-01-02 03:04 (aaaa1111): x"
+
+
 def test_an_unknown_frame_writes_nothing(repo, clock):
     before = (repo / "plans" / "stack.md").read_bytes()
     assert append(repo, "99", "--sid", "aaaa1111", "--text", "x") == 2
