@@ -1,9 +1,9 @@
 r"""
 Append one status line to a frame of the stack, and commit the stack alone.
 
-    python tools/status.py 12 --sid 2555d93f --text "the scope report is in"
-    python tools/status.py 12 --sid 2555d93f --body line.txt
-    python tools/status.py 12 --sid 2555d93f --ruling "their words" --at 14:20
+    python tools/status.py 12 --sid a1b2c3d4 --text "the scope report is in"
+    python tools/status.py 12 --sid a1b2c3d4 --body line.txt
+    python tools/status.py 12 --sid a1b2c3d4 --ruling "their words" --at 14:20
 
 Two steps failed often enough by hand to become a tool. A status time
 typed from memory was wrong on 22 recorded occasions. A status line passed

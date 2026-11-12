@@ -2,7 +2,7 @@ r"""
 The state page: what a session needs from the stack, and nothing else.
 
     python tools/state.py                      # every held frame
-    python tools/state.py --sid 2555d93f       # one session's frames
+    python tools/state.py --sid a1b2c3d4       # one session's frames
     python tools/state.py --since 2026-09-17   # for the Principal's return
 
 The stack is the history, and nobody reads it whole. A session that took
@@ -31,9 +31,9 @@ The tool reads the format of the kit's `stack.md` template:
 * A status line is `- Status <date> <time> (<peer name>): <text>`. The
   time and the peer name can be absent, as on the template's bottom frame.
 * A popped frame moves to `plans/archive/stack-<date>.md`.
-* A rating such as `[high]`, `[med]` or `[low]` on a Waits on line is
-  optional. The kit does not define one, and the tool prints none when
-  the line has none.
+* A rating `[high]`, `[med]` or `[low]` on a Waits on line is the rating
+  of the question, as the brief defines it. The tool prints none when the
+  line has none.
 
 Set `PRINCIPAL` below to the words your stack uses for the Principal.
 """
