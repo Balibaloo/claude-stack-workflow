@@ -313,6 +313,13 @@ timer, then continue on the reply or on the recommended answer. A high
 or a medium question waits for the reply. Two low questions once kept
 a session idle for 5 hours 18 minutes.
 
+Tell a question to {{principal}} as a story: one concrete situation,
+everyday names, today's behaviour, and what happens next under each
+option. The full question goes in the terminal reply, and a
+notification only rings. A request for thoughts gets an answer and
+moves nothing. Check a claim of {{principal}}'s about the state of the
+world against the records and the code before you act on it.
+
 Records: a conclusion goes to a record when it forms. Every conclusion
 carries a mark, each with a reason the size of a commit headline:
 (observed: where and when), (reasoned: why), or (ruled: why). An

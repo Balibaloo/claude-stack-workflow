@@ -173,7 +173,9 @@ meanings of exit 2 of `standby`. The sender hands off at 350k, keeps the
 last 50k for the taker, and stops when the taker sends the word
 released. A wake runs the state print in place of a read of the stack.
 The status tool writes every status line with the clock's time and
-commits the stack alone.
+commits the stack alone. The brief also gains eight rules that the
+workflow's source learned after the kit was cut: on a question to the
+Principal, on a wall and its fix, on the reviews, and on the tools.
 
 Do the steps in this order. The order matters, because a watcher that
 arms with the new timeout under the old cap is killed with no exit code.
@@ -232,6 +234,8 @@ arms with the new timeout under the old cap is killed with no exit code.
    - After the escalation paragraph, add the paragraph that starts "Rate
      each question". The 20 minutes are borrowed, so set your own number
      when this project measures one.
+   - After that paragraph, add the paragraph that starts "Tell a
+     question to".
    - Replace every `{{slot}}` in the text you moved.
 6. **The command.** In `.claude/commands/standby.md`, replace step 2 and
    the `**2**` item of the exit list with those of
