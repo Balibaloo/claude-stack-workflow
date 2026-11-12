@@ -234,14 +234,12 @@ A wall moves to its fix in this order:
 1. Every new wall gets a provenance read before its first fix: the
    ruling or the build that made the mechanism, and when.
 2. Reason over all the walls of a run and their provenances before you
-   plan any one, and take the biggest root first. A wall that matches a
-   frame not yet built opens no new frame. That frame moves to the front
-   with the new count. Seven of ten walls of one run once matched older
-   frames.
-3. One agent reads the issue with no cause in its brief, and counts its
-   reach: every place with the same gap. The fix covers the reach.
-   Fourteen frames in a row once fixed none of their walls at the
-   source.
+   plan any one. The biggest root goes first. Seven of ten walls of one
+   run once matched older frames. A wall that matches a frame not yet
+   built opens no new frame. That frame moves up with the new count.
+3. One agent reads the issue with no cause in its brief and counts its
+   reach, every place with the same gap. The fix covers the reach.
+   Fourteen frames in a row once fixed none of their walls at the source.
 4. Before pass 1 of a fix that changes a structure, one agent writes
    three to five shapes, each with its cost, its failure and its
    measure. You judge the page. In one frame, passes 2 to 7 kept the
