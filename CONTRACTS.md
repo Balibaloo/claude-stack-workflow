@@ -210,7 +210,12 @@ waiting before it cost the standby no tokens.
    cannot race a session that is already working.
 10. Give an unread claim back. A session can wake and fail to act. It
     was observed twice, both times a usage limit. So a claim with no
-    receipt returns to the queue as a vacancy on a clock.
+    receipt returns to the queue as a vacancy on a clock. The clock starts
+    when the claim reaches its session, and never at the post time of a
+    vacancy. A vacancy that waited all night through a drought once became
+    a claim that was already too old, and it went back before its taker
+    woke. A vacancy carries no claim time, so each new taker gets the full
+    clock.
 11. Refuse to make a working session a standby. A session that holds a
     frame must not rejoin the reserve, or it is handed a second frame.
 12. Find one mailbox from anywhere in the checkout. `--show-toplevel`
