@@ -140,8 +140,8 @@ def scan(path):
 def level(est):
     """Return the threshold label for an estimate."""
     if est >= 350:
-        return ("finish the held frame and hand off, keep the last 50k"
-                " for the taker")
+        return ("write the status line, hand the frame off, keep the last"
+                " 50k for the taker")
     if est >= 300:
         return "finish the frame, take no new work"
     if est >= WARN:
