@@ -36,9 +36,10 @@ three warnings only:
   ```
 
   Never hand off below 350k while a frame you hold can still move. Keep
-  the last 50k of your context to answer the taker. The command takes the oldest free standby, writes one claim, and waits
-  for that session to take the frame. Read the exit code, and write the
-  status line from it.
+  the last 50k of your context to answer the taker. The command takes
+  the oldest free standby, writes one claim, and waits for that session
+  to take the frame. Read the exit code, and write the status line from
+  it.
 
   - 0: a named session holds the frame. Write that session id in the
     status line. Stop work on the stack, and answer the taker until it
