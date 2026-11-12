@@ -93,7 +93,7 @@ Do the steps in this order. The order matters, because step 1 stops step
 
 2. **The tool.** Copy `meta/tools/handover.py` to `tools/handover.py` and
    `meta/tools/test_handover.py` beside your other tests. Run them once:
-   64 tests, under a minute. Add `.handover/` to `.gitignore`.
+   65 tests, under a minute. Add `.handover/` to `.gitignore`.
 
 3. **The hook.** Diff before you merge. Run
 
@@ -199,7 +199,7 @@ arms with the new timeout under the old cap is killed with no exit code.
 2. **The tool.** Diff `meta/tools/handover.py` against
    `tools/handover.py`, and the two test files, the same way as step 3
    above. Replace each file whole unless the diff proves local content.
-   Run the tests once: 64 tests, under a minute. A watcher that armed
+   Run the tests once: 65 tests, under a minute. A watcher that armed
    before the copy runs the old code until its wait ends. The new
    reclaim reads the age of its claims from the file time, so that
    watcher needs no step.
@@ -595,7 +595,7 @@ copy the hand-off first. Run their tests once:
 python -m pytest tools/test_state.py tools/test_status.py -q
 ```
 
-Outside the kit, 53 pass and one skips, in a few seconds. The skipped
+Outside the kit, 59 pass and one skips, in a few seconds. The skipped
 test pins the test's copy of `stack.md` to `meta/stack.md`, which only
 the kit holds beside `tools/`.
 

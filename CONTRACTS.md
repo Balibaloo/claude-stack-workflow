@@ -150,7 +150,7 @@ python tools/state.py [--sid <sid>] [--stack <path>] [--limit <n>]
 python tools/state.py --since YYYY-MM-DD
 ```
 
-**It ships with the kit**, at `meta/tools/state.py`, with 33 tests in
+**It ships with the kit**, at `meta/tools/state.py`, with 36 tests in
 `meta/tools/test_state.py`. Copy both. The list below is what it already
 does, kept so that a port to another language has a specification.
 
@@ -216,7 +216,7 @@ python tools/status.py <frame> --sid <sid> --body <file>
 python tools/status.py <frame> --sid <sid> --ruling <words> [--at HH:MM] [--date YYYY-MM-DD]
 ```
 
-**It ships with the kit**, at `meta/tools/status.py`, with 21 tests in
+**It ships with the kit**, at `meta/tools/status.py`, with 24 tests in
 `meta/tools/test_status.py`. Copy both. The tool imports `state.py` for
 the frame reader and `handover.py` for the root of the checkout, so keep
 the three files in one directory. The list below is what it already
@@ -267,7 +267,7 @@ Write tool writes, and the tool reads it with `--body`.
 **What it is.** One command that moves a frame from a full session to a
 fresh one. It lands while the fresh session sits idle at its prompt.
 
-**It ships with the kit**, at `meta/tools/handover.py`, with 64 tests.
+**It ships with the kit**, at `meta/tools/handover.py`, with 65 tests.
 Copy both, and copy `meta/commands/standby.md` with them. The enrolment
 in requirement 17 lives in `meta/hooks/context_count.py`, so copy that
 too. The list below is what it already does, kept so that a port to
