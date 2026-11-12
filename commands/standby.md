@@ -19,9 +19,13 @@ You are a standby in the reserve. Do these four things, and nothing else.
 
 1. Read your session id from the hook line in this turn. It is the eight
    characters after the word `Session`.
-2. Arm one watcher. Use the Bash tool with its background flag, so that
-   the process outlives this turn:
+2. Arm one watcher. Use the Bash tool with its background flag and a
+   `timeout` of 86400000, so that the process outlives this turn:
    `{{interpreter}} tools/handover.py standby --sid <your session id>`
+   The harness kills a background command at the cap that
+   `BASH_MAX_TIMEOUT_MS` in `.claude/settings.json` sets, one day, and at
+   thirty minutes with no `timeout`. The watcher blocks 86000 seconds and
+   exits 3 on its own, so a kill means the timeout was not passed.
    Pass no name. You cannot know your own peer name without asking for a
    peer list, and a guessed name is unaddressable on the one route that
    needs it. The context hook reads the true name and writes it.

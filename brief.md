@@ -110,7 +110,11 @@ needs it. The hook writes the true name.
 One line, and no line continuation. A backslash continues a line in Git
 Bash and breaks it in PowerShell.
 
-Run it with the Bash tool and its background flag. Then run
+Run it with the Bash tool, its background flag, and a `timeout` of
+86400000. The harness kills a background command at the cap that
+`BASH_MAX_TIMEOUT_MS` in `.claude/settings.json` sets, one day, and at
+thirty minutes with no `timeout`. The watcher blocks 86000 seconds and
+exits 3 by itself, so a re-arm is one turn per day. Then run
 `{{interpreter}} tools/handover.py peers` and find your own session id in
 the table. A background command returns at once and can still fail, so
 prove the arm before you report it.

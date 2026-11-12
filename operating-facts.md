@@ -222,18 +222,40 @@ the machine the tool was built on:
 - The cost of arming a standby: one command and one line of reply.
   {{measure it, and write the number here}}
 - The cost of a re-arm when the wait runs out: one turn per standby per
-  `--wait`. At the 28800 default that is one turn per session per eight
-  hours. Observed: two standbys ran out at 10:37 and re-armed four and
-  seven seconds later with no person present, and both were still at
-  about 20k after twelve and a half hours in the reserve. (observed:
-  a destination's hand-off log, 2026-09-20)
-- How long the harness lets a background process live. A heartbeat beat
-  150 times over 49.7 minutes here and then ended on its own clock, with
-  no interruption. A destination then ran two watchers past 71 minutes
-  with nothing stale, and that run had not ended when it was read. So the
-  lower bound is 71 minutes and there is still no ceiling, only a floor
-  that keeps moving. (observed: two projects, 2026-09-20) {{measure your
-  own, then set `--wait` below it}}
+  `--wait`. At the 86000 default it is one turn per session per day.
+  Under a 7000 default it was one turn per session per two hours, about
+  1k of context a turn, and about 6k over twelve hours. (borrowed:
+  observed on the machine the tool was built on, 2026-10-25) Two
+  standbys ran out at 10:37 and re-armed four and seven seconds later
+  with no person present. Both were still at about 20k after twelve and
+  a half hours in the reserve. (observed: a destination's hand-off log,
+  2026-09-20)
+- How long the harness lets a background process live. On 2026-09-20 a
+  heartbeat beat 150 times over 49.7 minutes and then ended on its own
+  clock. A destination ran two watchers past 71 minutes the same day.
+  (observed: two projects, 2026-09-20)
+
+  On 2026-10-01 the harness killed a watcher armed with no `timeout` at
+  30 minutes. It killed one armed with the maximum `timeout` of 7200000
+  at 2 hours exactly. The sign is a task notification with status
+  `killed` and no exit code. (borrowed: observed on the machine the tool
+  was built on, 2026-10-01 to 2026-10-02) The same machine had run
+  watchers for eight full hours in September, so a harness update
+  brought the kill. (reasoned: the hand-off log of that machine)
+
+  The two-hour cap is the harness setting `BASH_MAX_TIMEOUT_MS`. The
+  harness documentation says that a value above two hours raises the
+  background cap too. (borrowed: the documentation, read 2026-10-25) So
+  the kit's `settings.json` sets it to 86400000, one day, and the
+  `--wait` default is 86000. A session reads the setting at its start,
+  so a standby opened before the change keeps the old cap.
+
+  The raised cap holds. Under the 86000 default, 35 of 46 watchers lived
+  past two hours before a claim woke them or the wait ran out. The
+  longest woke at 21.1 hours. Three ran the full 86000 seconds and
+  exited 3 by themselves. (borrowed: observed in the hand-off log of the
+  machine the tool was built on, 2026-10-25 to 2026-11-11) {{measure
+  your own, then set `--wait` below it}}
 
 ## Decisions by the assistant
 

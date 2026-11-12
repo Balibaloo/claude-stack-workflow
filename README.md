@@ -327,7 +327,10 @@ Nothing works before these five exist. Write them in this order.
    answer of question 6 if they differ. The hook prints your session id
    at every wake, and the wake procedure needs that id to claim a frame.
    Keep the `permissions.allow` entry in that file as well. It is not a
-   convenience, and step 5 of this README says what it prevents.
+   convenience, and step 5 of this README says what it prevents. Keep
+   the `env` block too. `BASH_MAX_TIMEOUT_MS` lets a standby's watcher
+   live one day, and without it the harness kills the watcher at two
+   hours or less.
 
 Create `plans/archive/` now. A closed frame moves there, and so do the
 grill record, every scope report, and every design record.

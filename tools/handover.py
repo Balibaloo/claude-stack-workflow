@@ -166,7 +166,7 @@ from pathlib import Path
 BOX = ".handover"
 BEAT = 20.0
 STALE = 90.0
-WAIT = 28800.0
+WAIT = 86000.0     # under the one-day BASH_MAX_TIMEOUT_MS in settings.json
 CONFIRM = 90.0
 RECLAIM = 900.0
 GRACE = 25.0
