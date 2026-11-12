@@ -192,8 +192,10 @@ On wake:
    The message goes from the taker to the spent sender, and never the
    reverse.
 2. Read `plans/composition.md`.
-3. Read the open frames of `plans/stack.md`: yours, and any blocked on
-   {{principal}}. Not the closed ones.
+3. Run `{{interpreter}} tools/state.py --sid <your session id>` for your
+   frames and the open decisions. Do not read `plans/stack.md` whole. A
+   taker that read the stack's open frames spent 35k, and the print
+   costs about 3k.
 4. Read the memory files the frame names. Not all of them.
 5. Reply first with the state: the open frames, and each blocked
    question with a recommended answer. Then your reading of
@@ -289,12 +291,17 @@ when, waits on, a pointer to the reasoning, a dated status. Every frame
 carries a name of a few words in its heading, and every mention of that
 frame carries the name with the number. "Frame 50" is an index into a
 file. "Frame 50, port the hand-off kit" is a thing {{principal}} can
-answer about without opening anything. The status line's time comes from
-the clock, never from memory. Closed frames leave
-the file. Commit the stack alone after every change. Never edit another
-session's frame, except to add a waits-on line. In the smart zone you
-decide judgement and completion. You write your own instruction files
-and check them with {{principal}}.
+answer about without opening anything. Write each status line with
+`{{interpreter}} tools/status.py <n> --sid <your session id> --text "<body>"`.
+The tool takes the time from the clock and commits the stack alone. A
+body with a backslash or a quote goes in a file that the Write tool
+writes, read with `--body <file>`. Write {{principal}}'s words with
+`--ruling "<words>" --at HH:MM` in place of `--text`. A typed time was
+wrong 22 times, and a heredoc lost a backslash 30 times. Closed frames
+leave the file. Commit the stack alone after every other change too.
+Never edit another session's frame, except to add a waits-on line. In
+the smart zone you decide judgement and completion. You write your own
+instruction files and check them with {{principal}}.
 
 # Commit messages
 
@@ -366,6 +373,17 @@ when you build the thing.
   section. They cost nothing, and the day they matter you will not have
   time to write them. Copy `meta/tools/handover.py` at the same time,
   because the paragraph names it.
+- No state print yet: write step 3 of `On wake:` as "Read the open
+  frames of `plans/stack.md`: yours, and any blocked on {{principal}}.
+  Not the closed ones."
+- No status tool yet: in the Records paragraph, replace the text from
+  "Write each status line" to "every other change too" with: "Take the
+  status line's time from `date` in the same command, never from
+  memory. Write a status line with the Edit tool, never through a shell
+  heredoc. Closed frames leave the file. Commit the stack alone after
+  every change."
+  The status tool imports `tools/handover.py`, so it cannot run without
+  the hand-off.
 - No background process that outlives a turn: the standby section is
   false. Say so in "Tools not built yet" and read the degraded path in
   `meta/CONTRACTS.md`.

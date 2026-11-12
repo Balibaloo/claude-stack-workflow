@@ -66,7 +66,9 @@ Find which release the repository runs before you start. A repository
 with no `tools/handover.py` predates the hand-off, so do steps 1 to 7
 below. A repository that has the tool and hands off at 400k predates the
 release of 2026-11, so do only the steps of "The release of 2026-11"
-further down.
+further down. A repository of the first kind also takes step 4 of that
+release, and the bullets of its step 5 that name the state print and the
+status tool.
 
 Do the steps in this order. The order matters, because step 1 stops step
 3 from parking a session.
@@ -163,13 +165,15 @@ other reasons. `meta/CONTRACTS.md` carries the numbers.
 
 ### The release of 2026-11
 
-This release changes six things. The standby watcher waits one day, and
+This release changes eight things. The standby watcher waits one day, and
 a setting raises the harness cap to match. The reclaim clock starts at
 the claim. The enrolled peer name wins in the stored row. A decision
 that waits on the Principal pushes to the phone. The brief names both
 meanings of exit 2 of `standby`. The sender hands off at 350k, keeps the
 last 50k for the taker, and stops when the taker sends the word
-released.
+released. A wake runs the state print in place of a read of the stack.
+The status tool writes every status line with the clock's time and
+commits the stack alone.
 
 Do the steps in this order. The order matters, because a watcher that
 arms with the new timeout under the old cap is killed with no exit code.
@@ -191,7 +195,11 @@ arms with the new timeout under the old cap is killed with no exit code.
    step 3 above. This release changes the `level` function and the
    thresholds in the module text. Run the check by hand again, and check
    that `peers` lists no test row.
-4. **The brief.** In your `CLAUDE.md`, take these from `meta/brief.md`:
+4. **The state print and the status tool.** Copy the two tools and their
+   two tests to `tools/` as step 5 of the adoption says, below. Run the
+   tests before you set `PRINCIPAL` and `SUMMARY_PREFIX`. Set both to the
+   words your records already use.
+5. **The brief.** In your `CLAUDE.md`, take these from `meta/brief.md`:
    - Replace the `400k:` bullet with the `350k:` bullet, whole. The
      bullet ends with the new paragraph that starts "A hand-off is also
      a dialogue". Its exit `0:` item and the paragraph that starts "A
@@ -203,26 +211,32 @@ arms with the new timeout under the old cap is killed with no exit code.
    - Replace the `2:` item of the standby exit list.
    - Add the last six sentences of step 1 of `On wake:`, which start
      "Exit 0 also prints the sender's peer name".
+   - Replace step 3 of `On wake:`, the read of the open frames of the
+     stack, with the step that runs the state print.
+   - In the Records paragraph, replace the sentence on the clock and the
+     sentence on the stack commit. The new text starts "Write each status
+     line" and ends "after every other change too".
    - Replace every `{{slot}}` in the text you moved.
-5. **The command.** In `.claude/commands/standby.md`, replace step 2 and
+6. **The command.** In `.claude/commands/standby.md`, replace step 2 and
    the `**2**` item of the exit list with those of
    `meta/commands/standby.md`. Replace the `{{interpreter}}` slot in the
    text you moved.
-6. **The records.** In `plans/operating-facts.md`, replace the bullet on
+7. **The records.** In `plans/operating-facts.md`, replace the bullet on
    the cost of a re-arm and the bullet on how long the harness lets a
    background process live. Take both from the "The peers and the
    reserve" section of `meta/operating-facts.md`. They are borrowed, so
    keep their marks until this project measures its own.
-7. **The reserve.** A session reads the settings at its start. So a
+8. **The reserve.** A session reads the settings at its start. So a
    standby that was open before step 1 still runs under the old cap, and
    its watcher is killed at two hours or less. Run `peers`, name those
    standbys to the Principal, and ask for fresh windows in their place.
-8. **Prove it, then say so.** Arm one fresh standby and check `peers`
+9. **Prove it, then say so.** Arm one fresh standby and check `peers`
    after more than two hours. Its beat must still be a number of seconds.
    Then hand that standby a frame with `--sender` set. The take must
    print `from <sender id> (<peer name>)` and the line that names the
-   word released. Report which checks held, and push a frame for any
-   check that did not.
+   word released. Run acceptance line 14 at the end of this README.
+   Report which checks held, and push a frame for any check that did
+   not.
 
 Delete `meta/` again when these steps are done.
 
@@ -479,7 +493,7 @@ assume the suite section is the only part that changes.
 
 ## Step 5: the tools, each on its own trigger
 
-The kit ships two tools and describes two. Code welds to a language and
+The kit ships four tools and describes two. Code welds to a language and
 a layout, so a copied gate or map would carry another project's shape
 into yours. `meta/CONTRACTS.md` states what each of those two must
 supply and when to build it. Read it when a trigger fires, and not
@@ -516,7 +530,32 @@ woken at all, and the Principal cannot see why.
 Copy it at adoption, even with one session open. The day a hand-off
 matters is the day the sender has no context left to write a tool.
 
-The short version of all four:
+**The state print and the status tool ship, because they read the kit's
+own stack format and no project's.** Copy `meta/tools/state.py`,
+`meta/tools/status.py`, `meta/tools/test_state.py` and
+`meta/tools/test_status.py` to `tools/`. Keep the two tests beside the
+tools, because `test_status.py` imports `test_state.py` and both import
+the tools by their bare names. `status.py` imports `handover.py`, so
+copy the hand-off first. Run their tests once:
+
+```
+python -m pytest tools/test_state.py tools/test_status.py -q
+```
+
+Outside the kit, 53 pass and one skips, in a few seconds. The skipped
+test pins the test's copy of `stack.md` to `meta/stack.md`, which only
+the kit holds beside `tools/`.
+
+Run the tests before you set the two constants. The tests write their
+stacks with the default values, and 20 of them fail after the change.
+Then set them:
+
+- `PRINCIPAL` at the top of `tools/state.py`: the words your stack uses
+  for the Principal, from question 9. The status tool reads it too.
+- `SUMMARY_PREFIX` at the top of `tools/status.py`: the type and the
+  scope of a stack commit under your commit standard, from question 8.
+
+The short version of all six:
 
 - A **gate** runs the suite and prints five lines, so that a full run
   costs a few thousand tokens of your context instead of tens of
@@ -531,6 +570,12 @@ The short version of all four:
   while it waits idle. It ships with the kit. It uses a file and not a
   message, because a file is addressed by session id, proved by the
   receiver's own state, and free for a standby that is still waiting.
+- A **state print** shows the frames a session holds and the open
+  decisions in about 3k of context. It ships with the kit. A wake runs
+  it in place of a read of the stack.
+- A **status tool** appends one status line with the clock's time and
+  commits the stack alone. It ships with the kit. Use it for every
+  status line.
 
 Until a tool exists, the brief's line that names it is false. Cut that
 line from your brief. Then record what you cut, in a section of
@@ -568,7 +613,8 @@ meta/hooks/
 ```
 
 Keep `meta/agents/` until all three agents are installed. Keep
-`meta/tools/` until you have copied the sweep and the hand-off. Keep
+`meta/tools/` until you have copied the sweep, the hand-off, the state
+print and the status tool. Keep
 `meta/commands/` until you have copied the standby command. Keep
 `meta/CONTRACTS.md` until the gate and the map exist. Delete `meta/`
 itself when all four are empty.
@@ -578,8 +624,9 @@ itself when all four are empty.
 Run every line. Report the ones that do not hold, and the ones you could
 not check.
 
-1. A fresh session reads the brief, the composition page and the stack,
-   and reports the open frames without being told where to look.
+1. A fresh session reads the brief and the composition page, runs the
+   state print, and reports the open frames without being told where to
+   look.
 2. The hook prints a session id at the first prompt of that session.
 3. The fresh session claims a frame by writing its session id in the
    frame's heading.
@@ -627,6 +674,11 @@ not check.
 13. A claim that its receiver never takes comes back. Hand a frame to a
     standby, do not run the take, wait fifteen minutes, and run `peers`.
     It prints `RECLAIMED` and the frame waits as a vacancy again.
+14. `python tools/state.py --sid <your session id>` prints the adoption
+    frame under your id. Then `python tools/status.py <n> --sid <your
+    session id> --text "the status tool is installed"` appends a line
+    with the clock's time and your peer name to that frame. `git show
+    --stat HEAD` lists `plans/stack.md` alone.
 
 ## The one rule that makes the rest work
 

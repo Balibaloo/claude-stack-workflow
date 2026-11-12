@@ -1,19 +1,22 @@
-# The four tools
+# The six tools
 
-The kit ships the sweep and the hand-off, and it describes the gate and
-the map. A gate welds to a test runner and a map welds to a language, so a
-copied one would carry another project's shape into yours. The sweep welds
-to neither, because it reads bytes. The hand-off welds to neither, because
-it moves files and watches a clock.
+The kit ships the sweep, the hand-off, the state print and the status
+tool, and it describes the gate and the map. A gate welds to a test runner
+and a map welds to a language, so a copied one would carry another
+project's shape into yours. The sweep welds to neither, because it reads
+bytes. The hand-off welds to neither, because it moves files and watches a
+clock. The state print and the status tool read the kit's own stack
+format, and no project's.
 
 This file states what each tool must do and when to build it. Build the
 gate and the map on their own triggers, and not before.
 
-Three of the four exist for the same reason: the assistant's context is
+Four of the six exist for the same reason: the assistant's context is
 the scarce resource, and each tool turns a large amount of output into a
 small amount of output. The hand-off exists to protect the same resource
 in another session: it lets a reserve session wait for hours and spend
-nothing.
+nothing. The status tool exists for correctness: it does two steps that
+failed often by hand.
 
 Keep this file until the gate and the map exist. Delete it then.
 
@@ -136,6 +139,121 @@ Windows, which rewrites a whole file and hides the real change.
 **The rule that goes in the briefs.** A change that is the same edit in
 more than three files is a script, and the script runs through the
 sweep. Read the diff once, for the judgement cases only.
+
+## The state print
+
+**What it is.** One command that prints what a session needs from the
+stack, and nothing else:
+
+```
+python tools/state.py [--sid <sid>] [--stack <path>] [--limit <n>]
+python tools/state.py --since YYYY-MM-DD
+```
+
+**It ships with the kit**, at `meta/tools/state.py`, with 33 tests in
+`meta/tools/test_state.py`. Copy both. The list below is what it already
+does, kept so that a port to another language has a specification.
+
+**The trigger to use it.** Copy it at adoption, with the stack. The wake
+steps of the brief name it, so a session meets it at its first wake.
+
+**Why it exists.** A session that took a hand-off and read the open
+frames of the stack spent 35k of context. The print costs about 3k.
+(borrowed)
+
+**What it must do.**
+
+1. Read `plans/stack.md` in place and never edit it. Find the stack from
+   the root of the checkout, so a worktree reads its own stack.
+2. Read the format of the kit's `stack.md`. A frame starts at a heading
+   `### <n>. <name>` and ends at the next heading. The frames stand
+   between `## Stack` and `## Parked`. A heading inside a fenced code
+   block is not a frame, so the template's worked example is never read
+   as a frame.
+3. Name the holder by the session id in the heading, as `[a1b2c3d4]` or
+   `(a1b2c3d4)`. The last id in the heading holds the frame.
+4. Print four lines for each frame a holder has: the heading, the first
+   bullet, the wait, and the last status line. Cut a status line in its
+   body, so its time and its peer name stay. `--sid` prints the frames of
+   one session, and `--limit` sets the characters of the status line.
+5. Print the open decisions: each frame whose `Waits on` line names the
+   Principal for a decision. A wait on the Principal's order is not a
+   decision, and a mark that cites the Principal's words opens none.
+6. With `--since`, print the page for the Principal's return in four
+   sections: what closed, what was decided under an assumption, what
+   waits on the Principal, and what the Principal ruled. A closed frame
+   is read from `plans/archive/stack-<date>.md`. A decision under an
+   assumption carries the mark `(assumed: ...)` in its status line.
+7. Keep the return page to one screen. Cut the oldest rows of the
+   closed, the assumed and the ruled sections, and say how many went.
+   Never cut the waits, because the Principal must answer them.
+8. Print one row per ruling, with the count of the later lines that cite
+   it again.
+9. Print a rating `[high]`, `[med]` or `[low]` beside a decision when
+   its `Waits on` line has one. The return page sorts its waits by it.
+10. Name the Principal through one constant, `PRINCIPAL`, at the top of
+    the file. Set it to the words your stack uses.
+11. Return 0 when it prints, and 2 for a session id it cannot use, a
+    missing stack, or a `--since` that is not a date.
+
+**The rule that goes in the briefs.** On wake, run the state print with
+your session id, and do not read the stack whole.
+
+## The status tool
+
+**What it is.** One command that appends one status line to a frame and
+commits the stack alone:
+
+```
+python tools/status.py <frame> --sid <sid> --text <body>
+python tools/status.py <frame> --sid <sid> --body <file>
+python tools/status.py <frame> --sid <sid> --ruling <words> [--at HH:MM] [--date YYYY-MM-DD]
+```
+
+**It ships with the kit**, at `meta/tools/status.py`, with 21 tests in
+`meta/tools/test_status.py`. Copy both. The tool imports `state.py` for
+the frame reader and `handover.py` for the root of the checkout, so keep
+the three files in one directory. The list below is what it already
+does, kept so that a port to another language has a specification.
+
+**The trigger to use it.** Copy it at adoption, with the state print and
+the hand-off. The Records paragraph of the brief names it.
+
+**Why it exists.** Two measured hazards. A status time typed from memory
+was wrong on 22 recorded occasions. A status line passed through a shell
+heredoc lost a backslash on 30. (borrowed)
+
+**What it must do.**
+
+1. Take the line's time from the clock, never from an argument.
+2. Take the body from one argument or from a file, never from a shell
+   heredoc. Join the lines of a body with one space each.
+3. Write the line in the form of the kit's `stack.md`:
+   `- Status <date> <time> (<peer name>): <body>`. Put it after the
+   frame's last status line. A frame with no status line takes it after
+   its `- Reasoning:` line, else after its last bullet.
+4. Keep the file's own line end, so a CRLF file stays CRLF.
+5. Read the peer name from the hook's enrolment in
+   `.handover/sessions/<sid>.json`. With no enrolment, write the session
+   id and print a warning. Never refuse a line for a missing name.
+6. With `--ruling`, write the Principal's words as a ruling line. Quote
+   the words whole, with the time and the date that the Principal said
+   them, and the frame's workflow. `--at` and `--date` set that time and
+   that date, and the clock gives them by default. `state.py --since`
+   prints the line back.
+7. Commit the stack alone, by pathspec. A file that another change staged
+   stays staged and stays out of the commit.
+8. Name the frame in the summary line by its number and its name, cut at
+   a word within 72 characters. The type and the scope come from one
+   constant, `SUMMARY_PREFIX`. Set it to your commit standard.
+9. Return 0 when the line is written and committed, or written with
+   `--no-commit`. Return 1 when the line is written and the commit
+   failed. Return 2 for a usage error, an empty body, or a frame that the
+   stack does not hold.
+
+**The rule that goes in the briefs.** Write every status line with the
+tool. A body that holds a backslash or a quote goes in a file that the
+Write tool writes, and the tool reads it with `--body`.
 
 ## The hand-off
 
