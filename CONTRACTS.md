@@ -197,8 +197,10 @@ frames of the stack spent 35k of context. The print costs about 3k.
 11. Return 0 when it prints, and 2 for a session id it cannot use, a
     missing stack, or a `--since` that is not a date.
 
-**The rule that goes in the briefs.** On wake, run the state print with
-your session id, and do not read the stack whole.
+**The rule that goes in the briefs.** On wake, run the state print, and
+do not read the stack whole. After a hand-off, run it with the sender's
+session id that the take prints, because the handed frames carry that
+id until the taker claims them. With no hand-off, run it with your own.
 
 ## The status tool
 

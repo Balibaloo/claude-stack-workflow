@@ -194,10 +194,13 @@ On wake:
    The message goes from the taker to the spent sender, and never the
    reverse.
 2. Read `plans/composition.md`.
-3. Run `{{interpreter}} tools/state.py --sid <your session id>` for your
-   frames and the open decisions. Do not read `plans/stack.md` whole. A
-   taker that read the stack's open frames spent 35k, and the print
-   costs about 3k.
+3. Run `{{interpreter}} tools/state.py --sid <id>` for your frames and
+   the open decisions. After a hand-off, the id is the sender's session
+   id, which the take prints after `from`. The handed frames carry the
+   sender's id until you claim them in step 6. When the take printed
+   `from unknown`, run the print with no `--sid`. With no hand-off, use
+   your own session id. Do not read `plans/stack.md` whole. A taker that
+   read the stack's open frames spent 35k, and the print costs about 3k.
 4. Read the memory files the frame names. Not all of them.
 5. Reply first with the state: the open frames, and each blocked
    question with a recommended answer. Then your reading of
