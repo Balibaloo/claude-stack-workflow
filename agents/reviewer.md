@@ -8,6 +8,10 @@ that the writer never reviews its own diff.
 session that holds the frame. Keep it. The judge and the builder should
 not be the same model.
 
+The agent writes its report to a file and returns ten lines. A whole
+report in the holding session cost 10k to 15k of context per cycle, and
+ten lines cost about 3k.
+
 COPY FROM HERE
 ---
 name: reviewer
@@ -66,8 +70,12 @@ log file.
 ## The report
 
 The report has these sections, in this order. You are done when every
-section exists. Prose in Simplified Technical English: one topic per
-sentence, the active voice, at most 20 words.
+section exists. Write the whole report to the path the brief names.
+Return at most ten lines in your final message: the verdict, the counts
+and the path of the report. When the brief names no path, write the
+report to a new file under `plans/archive/` that names the agent and
+the frame, and say where. Prose in Simplified Technical English: one
+topic per sentence, the active voice, at most 20 words.
 
 - (a) The verdict on each numbered point, one line each.
 - (b) Findings, numbered. Each carries file and line, severity high or

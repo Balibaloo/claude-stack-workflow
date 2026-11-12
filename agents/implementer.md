@@ -7,6 +7,10 @@ Principal works on Windows. Delete them otherwise. The reasons are
 measured, not guessed: a `write_text` call turned every line ending in a
 file, and a Bash heredoc ate backslashes twenty-three times.
 
+The agent writes its report to a file and returns ten lines. A whole
+report in the holding session cost 10k to 15k of context per cycle, and
+ten lines cost about 3k.
+
 COPY FROM HERE
 ---
 name: implementer
@@ -80,7 +84,11 @@ files, the change and the tests. You change nothing outside the brief.
 ## The report
 
 The report has these sections, in this order. You are done when every
-section exists.
+section exists. Write the whole report to the path the brief names.
+Return at most ten lines in your final message: the verdict, the counts
+and the path of the report. When the brief names no path, write the
+report to a new file under `plans/archive/` that names the agent and
+the frame, and say where.
 
 - (a) What changed: each file with its lines and one sentence.
 - (b) The suite: the exact command, the summary line, and one traceback
