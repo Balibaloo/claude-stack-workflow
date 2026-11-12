@@ -16,8 +16,11 @@ stack write over each other's records, and the stack stops answering
 pushed and named to the Principal, who assigns it.
 
 The taker opens that dialogue, and never the sender. `hand` writes the
-sender's peer name into the claim as `sender_name`, and `take` prints it
-as the address. The sender only answers. It never writes first, because
+sender's peer name into the claim as `sender_name`. `take` prints the
+sender's current enrolled name as the address, because a restart changes
+the name, and the stored name when the sender has no enrolment. With
+neither, it says that the sender has no known address. The sender only
+answers. It never writes first, because
 a message spends the clean context that made the taker worth handing to.
 
 A message is not how it does that, and the reason is not that messages
@@ -222,16 +225,16 @@ def _root(start: Path) -> Path:
 
 
 def sender_name(box: "Box", claim: dict) -> str:
-    """The peer name a taker messages, from the claim first and the hook second.
+    """The peer name a taker messages, from the hook first and the claim second.
 
-    A claim written by an older release carries no `sender_name`, so the
-    hook's enrolment of the sender answers in its place.
+    A peer name changes when a session restarts, and the hook enrols the
+    new name. So the sender's current enrolment wins over the name that
+    the claim stored at the hand-off. The claim's name answers when the
+    sender has no enrolment, and an empty answer means no known address.
     """
-    name = str(claim.get("sender_name") or "")
     sender = str(claim.get("from_sid") or "")[:8]
-    if not name and sender:
-        name = str((box.enrolled(sender) or {}).get("name") or "")
-    return name
+    name = str((box.enrolled(sender) or {}).get("name") or "") if sender else ""
+    return name or str(claim.get("sender_name") or "")
 
 
 class Unreadable(OSError):
@@ -1047,12 +1050,14 @@ def cmd_take(args: argparse.Namespace, box: Box) -> int:
     if claim.get("note"):
         print("note: %s" % claim["note"])
     print("Claim the frame in the stack with your session id, then read the commit.")
-    if sender:
+    if name:
         # The hand-off is a dialogue that the taker opens when it needs to.
         # The sender keeps its last 50k for it and stops on the word released.
         print("Message %s for a context question before you ask the Principal. "
-              "When you need nothing more, message it the word released."
-              % (name or sender))
+              "When you need nothing more, message it the word released." % name)
+    else:
+        # A session id is not an address, so the tool names none.
+        print("The sender has no known address, so no message can reach it.")
     return 0
 
 

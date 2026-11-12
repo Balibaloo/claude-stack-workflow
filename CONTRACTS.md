@@ -398,10 +398,13 @@ waiting before it cost the standby no tokens.
 20. Carry the sender's address to the taker. The sender hands off at
     about 350k and keeps the last 50k of its context to answer the taker.
     So the claim and the vacancy carry the sender's peer name, read from
-    the enrolment at the hand, and the take prints it beside the sender's
-    session id. A claim with no name falls back to the enrolment. The
-    take also prints the release word, because the sender stops only when
-    the taker messages it.
+    the enrolment at the hand, and the take prints a name beside the
+    sender's session id. A restart changes a peer name, so the sender's
+    current enrolment wins, and the claim's name answers when the sender
+    has no enrolment. With no name from either, the take prints no
+    message line and says that the sender has no known address. The take
+    also prints the release word, because the sender stops only when the
+    taker messages it.
 
 **The rule that goes in the briefs.** Hand off with the command, and
 write the status line from its exit code. A hand-off gives away the whole

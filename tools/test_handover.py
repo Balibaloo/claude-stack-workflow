@@ -1031,10 +1031,12 @@ def test_take_gives_the_sender_address_and_the_release_word(box, capsys):
             "released.") in out
 
 
-def test_take_gives_the_sid_alone_when_no_name_is_known(box, capsys):
+def test_take_gives_no_address_when_no_name_is_known(box, capsys):
+    """A session id is not an address, so take prints no message line."""
     assert hand_and_take(box) == 0
     out = capsys.readouterr().out
-    assert "Message bbbb2222 for a context question" in out
+    assert "for a context question" not in out
+    assert "The sender has no known address, so no message can reach it." in out
 
 
 def test_take_names_no_address_when_no_sender_was_given(box, capsys):
@@ -1047,7 +1049,8 @@ def test_take_names_no_address_when_no_sender_was_given(box, capsys):
     assert "for a context question" not in out
 
 
-def test_the_claim_carries_the_sender_name_and_take_reads_it_first(box, capsys):
+def test_a_newer_enrolment_of_the_sender_wins_over_the_claim(box, capsys):
+    """A restart renames the sender, and the hook enrols the new name."""
     enrol(box, "bbbb2222", "peer-77")
     arm(box, "aaaa1111")
     run(box, "hand", "--frame", "7", "--commit", "abc1234",
@@ -1055,6 +1058,18 @@ def test_the_claim_carries_the_sender_name_and_take_reads_it_first(box, capsys):
     posted = json.loads(claim(box, "aaaa1111").read_text(encoding="utf-8"))
     assert posted["sender_name"] == "peer-77"
     enrol(box, "bbbb2222", "peer-renamed")
+    capsys.readouterr()
+    assert run(box, "take", "--sid", "aaaa1111") == 0
+    out = capsys.readouterr().out
+    assert "Message peer-renamed for" in out and "peer-77" not in out
+
+
+def test_the_claim_name_answers_when_the_sender_has_no_enrolment(box, capsys):
+    enrol(box, "bbbb2222", "peer-77")
+    arm(box, "aaaa1111")
+    run(box, "hand", "--frame", "7", "--commit", "abc1234",
+        "--sender", "bbbb2222", "--confirm", "0.1")
+    (handover.Box(box).sessions / "bbbb2222.json").unlink()
     capsys.readouterr()
     assert run(box, "take", "--sid", "aaaa1111") == 0
     assert "Message peer-77 for" in capsys.readouterr().out
