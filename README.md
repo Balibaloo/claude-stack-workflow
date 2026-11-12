@@ -198,9 +198,9 @@ arms with the new timeout under the old cap is killed with no exit code.
    thresholds in the module text. Run the check by hand again, and check
    that `peers` lists no test row.
 4. **The state print and the status tool.** Copy the two tools and their
-   two tests to `tools/` as step 5 of the adoption says, below. Run the
-   tests before you set `PRINCIPAL` and `SUMMARY_PREFIX`. Set both to the
-   words your records already use.
+   two tests to `tools/` as step 5 of the adoption says, below. Set
+   `PRINCIPAL` and `SUMMARY_PREFIX` to the words your records already
+   use.
 5. **The brief.** In your `CLAUDE.md`, take these from `meta/brief.md`:
    - Replace the `400k:` bullet with the `350k:` bullet, whole. The
      bullet ends with the new paragraph that starts "A hand-off is also
@@ -574,9 +574,8 @@ Outside the kit, 53 pass and one skips, in a few seconds. The skipped
 test pins the test's copy of `stack.md` to `meta/stack.md`, which only
 the kit holds beside `tools/`.
 
-Run the tests before you set the two constants. The tests write their
-stacks with the default values, and 20 of them fail after the change.
-Then set them:
+Set the two constants. The tests build their stacks and their expected
+texts from both, so they still pass after the change:
 
 - `PRINCIPAL` at the top of `tools/state.py`: the words your stack uses
   for the Principal, from question 9. The status tool reads it too.

@@ -4,7 +4,9 @@ The status tool, tested on stacks that the tests write.
 Every test that commits builds its own git repository under `tmp_path`.
 A fresh `git init` under temp inherits `core.autocrlf=true` from Git for
 Windows, so the environment turns `autocrlf` and signing off. The clock is
-replaced, so every line carries 2031-01-02 03:04.
+replaced, so every line carries 2031-01-02 03:04. The expected texts come
+from `state.PRINCIPAL` through `fit` and from `status.SUMMARY_PREFIX`, so
+the tests pass after an installer sets the two constants.
 """
 from __future__ import annotations
 
@@ -17,7 +19,7 @@ import pytest
 
 import state
 import status
-from test_state import STACK, TEMPLATE, TWO_FRAMES
+from test_state import STACK, TEMPLATE, TWO_FRAMES, fit
 
 GIT_ENV = {
     "GIT_AUTHOR_NAME": "test", "GIT_AUTHOR_EMAIL": "test@example.invalid",
@@ -133,9 +135,9 @@ def test_a_ruling_carries_the_words_and_the_workflow(repo, clock):
     enrol(repo, "aaaa1111", "peer-39")
     append(repo, "11", "--sid", "aaaa1111", "--ruling", "yes do it",
            "--at", "02:35", "--no-commit")
-    assert ('- Status 2031-01-02 03:04 (peer-39): **ruled. The Principal, '
-            '2031-01-02 02:35, in the terminal: "yes do it"** (ruled: the '
-            "Principal, in their words). The project's workflow.") in lines_of(repo)
+    assert fit('- Status 2031-01-02 03:04 (peer-39): **ruled. The Principal, '
+               '2031-01-02 02:35, in the terminal: "yes do it"** (ruled: the '
+               "Principal, in their words). The project's workflow.") in lines_of(repo)
 
 
 def test_a_ruling_finds_the_workflow_on_another_bullet(repo, clock):
@@ -145,8 +147,8 @@ def test_a_ruling_finds_the_workflow_on_another_bullet(repo, clock):
     append(repo, "11", "--sid", "aaaa1111", "--ruling", "yes", "--at", "23:50",
            "--date", "2031-01-01", "--no-commit")
     text = (repo / "plans" / "stack.md").read_bytes().decode()
-    assert ('**ruled. The Principal, 2031-01-01 23:50, in the terminal: "yes"** '
-            '(ruled: the Principal, in their words). Meta workflow.') in text
+    assert fit('**ruled. The Principal, 2031-01-01 23:50, in the terminal: "yes"** '
+               '(ruled: the Principal, in their words). Meta workflow.') in text
 
 
 def test_a_ruling_takes_the_workflow_flag_when_the_frame_names_none(repo, clock, capsys):
@@ -154,18 +156,18 @@ def test_a_ruling_takes_the_workflow_flag_when_the_frame_names_none(repo, clock,
     append(repo, "11", "--sid", "aaaa1111", "--ruling", "no", "--at", "01:00",
            "--no-commit")
     assert "the ruling carries no workflow" in capsys.readouterr().out
-    assert any(x.endswith('"no"** (ruled: the Principal, in their words).')
+    assert any(x.endswith(fit('"no"** (ruled: the Principal, in their words).'))
                for x in lines_of(repo))
     append(repo, "11", "--sid", "aaaa1111", "--ruling", "yes", "--at", "01:01",
            "--workflow", "project", "--no-commit")
-    assert any(x.endswith('"yes"** (ruled: the Principal, in their words). '
-                          "The project's workflow.") for x in lines_of(repo))
+    assert any(x.endswith(fit('"yes"** (ruled: the Principal, in their words). '
+                              "The project's workflow.")) for x in lines_of(repo))
 
 
 def test_a_ruling_with_no_at_carries_the_clock_and_a_warning(repo, clock, capsys):
     append(repo, "11", "--sid", "aaaa1111", "--ruling", "go", "--no-commit")
     assert "carries the clock's time 03:04" in capsys.readouterr().out
-    assert any("The Principal, 2031-01-02 03:04, in the terminal" in x
+    assert any(fit("The Principal, 2031-01-02 03:04, in the terminal") in x
                for x in lines_of(repo))
 
 
@@ -176,8 +178,8 @@ def test_the_ruling_line_reads_back_as_a_ruling(repo, clock, capsys):
     assert state.main(["--stack", str(repo / "plans" / "stack.md"),
                        "--since", "2031-01-01"]) == 0
     rulings = capsys.readouterr().out.split("## Rulings since 2031-01-01\n")[1]
-    assert rulings.startswith("11. The open ask waits on the Principal (2026-10-17) "
-                              ":: - Status 2031-01-02 03:04")
+    assert rulings.startswith(fit("11. The open ask waits on the Principal "
+                                  "(2026-10-17) :: - Status 2031-01-02 03:04"))
 
 
 def test_a_body_file_keeps_its_backslashes(repo, clock, tmp_path):
@@ -201,7 +203,7 @@ def test_the_commit_holds_the_stack_alone(repo, clock, capsys):
     files = git(repo, "show", "--name-only", "--format=", "HEAD").split()
     assert files == ["plans/stack.md"]
     assert git(repo, "log", "-1", "--format=%s") == \
-        "docs(plans): frame 10, The held frame refreshes the index"
+        status.SUMMARY_PREFIX + ": frame 10, The held frame refreshes the index"
     body = git(repo, "log", "-1", "--format=%b")
     assert body == ("The status tool appends one line to frame 10, The held frame "
                     "refreshes the index, at 2031-01-02 03:04 for session aaaa1111. "
@@ -217,8 +219,14 @@ def test_a_long_name_is_cut_at_a_word_within_72_characters(repo, clock):
     git(repo, "commit", "-qam", "longer")
     assert append(repo, "10", "--sid", "aaaa1111", "--text", "x") == 0
     line = git(repo, "log", "-1", "--format=%s")
+    full = (status.SUMMARY_PREFIX + ": frame 10, The held frame refreshes the index "
+            "after every commit on every branch of the repository")
     assert len(line) <= 72
-    assert line == "docs(plans): frame 10, The held frame refreshes the index after every"
+    assert full.startswith(line) and full[len(line)] == " ", "the cut falls at a word"
+    word = full[len(line) + 1:].split(" ")[0]
+    assert len(line) + 1 + len(word) > 72, "no word that fits is dropped"
+    if status.SUMMARY_PREFIX == "docs(plans)":
+        assert line == "docs(plans): frame 10, The held frame refreshes the index after every"
 
 
 def test_a_failed_commit_exits_1_and_keeps_the_line(repo, clock, capsys):

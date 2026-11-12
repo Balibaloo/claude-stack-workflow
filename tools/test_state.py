@@ -6,9 +6,14 @@ one session and has two status lines. Frame 11 waits on the Principal
 with a `[med]` rating. Frame 12 stands under `## Parked` and must not
 print. One more test builds a stack from the kit's own `stack.md`
 template, which is copied below, and adds two frames to it.
+
+The fixtures write "the Principal", and `fit` turns those words into the
+words of `state.PRINCIPAL`. So the tests pass after an installer sets the
+constant. Build every stack and every expected text through `fit`.
 """
 from __future__ import annotations
 
+import re
 import subprocess
 import sys
 from pathlib import Path
@@ -17,7 +22,15 @@ import pytest
 
 import state
 
-STACK = """# The task stack
+
+def fit(text: str, who: str | None = None) -> str:
+    """The text with "the Principal" in the words of the constant, or of `who`."""
+    who = state.PRINCIPAL if who is None else who
+    return text.replace("the Principal", who).replace(
+        "The Principal", who[:1].upper() + who[1:])
+
+
+RAW_STACK = """# The task stack
 
 ## Stack
 
@@ -45,6 +58,7 @@ STACK = """# The task stack
 - Waits on: the Principal's order.
 - Status 2026-10-01 09:00 (peer-02): parked words.
 """
+STACK = fit(RAW_STACK)
 
 # The kit's `stack.md`, copied whole with LF line ends. A test below
 # compares this copy to the kit's file when the kit's file is there.
@@ -146,7 +160,7 @@ Three things make that frame work.
    observation from a guess without asking anyone.
 """
 
-TWO_FRAMES = """### 3. Port the state tool (2026-11-12) [aaaa1111]
+TWO_FRAMES = fit("""### 3. Port the state tool (2026-11-12) [aaaa1111]
 
 - Meta workflow. A hand-off read the whole stack (observed: the count).
 - Ends when: the state page prints in about 3k tokens.
@@ -161,7 +175,7 @@ TWO_FRAMES = """### 3. Port the state tool (2026-11-12) [aaaa1111]
 - Waits on: the Principal's ruling on the runner.
 - Reasoning: `plans/archive/grill-2026-11-12.md`.
 
-"""
+""")
 
 
 def write(root: Path, text: str, eol: str = "\n") -> Path:
@@ -213,8 +227,8 @@ def test_the_parked_frame_never_prints(repo, capsys):
 
 def test_the_open_decision_carries_its_rating(repo, capsys):
     out = page(repo, capsys=capsys)
-    assert ("[med] 11. The open ask waits on the Principal (2026-10-17): "
-            "the Principal's ruling on the index [med].") in out
+    assert fit("[med] 11. The open ask waits on the Principal (2026-10-17): "
+               "the Principal's ruling on the index [med].") in out
     assert "Live" not in out, "the kit has no cap on live things"
     assert out.rstrip().endswith("Read the frame's Reasoning line before you act on it.")
 
@@ -222,8 +236,8 @@ def test_the_open_decision_carries_its_rating(repo, capsys):
 def test_a_decision_with_no_rating_prints_no_rating(repo, capsys):
     write(repo, STACK.replace(" on the index [med].", " on the index."))
     out = page(repo, capsys=capsys)
-    assert ("\n11. The open ask waits on the Principal (2026-10-17): "
-            "the Principal's ruling on the index.\n") in out
+    assert fit("\n11. The open ask waits on the Principal (2026-10-17): "
+               "the Principal's ruling on the index.\n") in out
     assert "unrated" not in out
 
 
@@ -249,12 +263,12 @@ def test_a_crlf_stack_prints_the_same_page(repo, capsys):
 
 
 def test_order_waits_are_not_open_decisions(repo, capsys):
-    extra = "".join(
+    extra = fit("".join(
         "### %d. Order %d (2026-10-17)\n\n- Meta workflow.\n"
         "- Waits on: %s\n\n" % (n, n, wait) for n, wait in (
             (20, "the Principal's order. Recommended after frame 9."),
             (21, "nothing. The Principal orders it."),
-            (22, "the Principal's order, and the Principal's ruling on the door.")))
+            (22, "the Principal's order, and the Principal's ruling on the door."))))
     write(repo, STACK.replace("## Parked", extra + "## Parked"))
     out = page(repo, capsys=capsys)
     assert "20. Order" not in out and "21. Order" not in out
@@ -263,13 +277,13 @@ def test_order_waits_are_not_open_decisions(repo, capsys):
 
 def test_a_cited_ruling_is_not_an_open_decision(repo, capsys):
     """A mark cites a word that was given. A wait names a word not yet given."""
-    extra = "".join(
+    extra = fit("".join(
         "### %d. Cited %d (2026-10-17)\n\n- Meta workflow.\n"
         "- Waits on: %s\n\n" % (n, n, wait) for n, wait in (
             (30, "the gate. The repair is ruled (ruled: the Principal, "
                  "2026-10-24 01:05, \"Yes\")."),
             (31, "frame 9's end (reasoned: the Principal's own price)."),
-            (32, "the Principal's ruling on the cap (observed: frame 9's count).")))
+            (32, "the Principal's ruling on the cap (observed: frame 9's count)."))))
     write(repo, STACK.replace("## Parked", extra + "## Parked"))
     out = page(repo, capsys=capsys)
     assert "30. Cited" not in out and "31. Cited" not in out
@@ -288,7 +302,7 @@ def test_a_sid_in_round_brackets_holds_a_frame(repo, capsys):
     assert "10. The held frame refreshes the index (2026-10-17) (Principal)\n" in out
 
 
-WRAPPED = STACK.replace(
+WRAPPED = fit(RAW_STACK.replace(
     "- Meta workflow. The index is stale after a commit (observed: the build).\n",
     "- Meta workflow. The index is stale after a commit (observed: the\n"
     "  build), and the second line of the bullet prints.\n").replace(
@@ -297,7 +311,7 @@ WRAPPED = STACK.replace(
     "  wraps to a third line.\n").replace(
     "- Waits on: the Principal's ruling on the index [med].\n",
     "- Waits on: the scope report of frame 10, and then a ruling by\n"
-    "  the Principal on the index [med].\n")
+    "  the Principal on the index [med].\n"))
 
 
 def test_a_wrapped_bullet_prints_whole(repo, capsys):
@@ -313,19 +327,19 @@ def test_a_wrapped_wait_that_names_the_principal_on_its_second_line(repo, capsys
     write(repo, WRAPPED)
     out = page(repo, capsys=capsys)
     decisions = out.split("## Open decisions\n")[1].split("\n\n")[0]
-    assert decisions == ("[med] 11. The open ask waits on the Principal (2026-10-17): "
-                         "the scope report of frame 10, and then a ruling by the "
-                         "Principal on the index [med].")
+    assert decisions == fit("[med] 11. The open ask waits on the Principal "
+                            "(2026-10-17): the scope report of frame 10, and then "
+                            "a ruling by the Principal on the index [med].")
 
 
 def test_a_wrapped_assumption_prints_on_the_since_page(repo, capsys):
-    write(repo, STACK.replace(
+    write(repo, fit(RAW_STACK.replace(
         "- Status 2026-10-17 11:00 (peer-01): the second line.\n",
         "- Status 2026-10-18 01:00 (peer-01): the cheap fix runs, and the\n"
-        "  mark wraps (assumed: the Principal takes the cheap fix).\n"))
+        "  mark wraps (assumed: the Principal takes the cheap fix).\n")))
     out = page(repo, "--since", "2026-10-17", capsys=capsys)
     section = out.split("## Decided under assumption")[1].split("## Waits")[0]
-    assert "the mark wraps (assumed: the Principal takes the cheap fix)." in section
+    assert fit("the mark wraps (assumed: the Principal takes the cheap fix).") in section
 
 
 def test_a_session_with_no_frame_says_so(repo, capsys):
@@ -346,20 +360,22 @@ def test_a_principal_with_a_name_is_matched_by_the_constant(repo, tmp_path):
     and runs the copy as a script.
     """
     source = Path(state.__file__).read_bytes().decode("utf-8")
-    line = 'PRINCIPAL = "the Principal"'
-    assert source.count(line) == 1
+    lines = re.findall(r'^PRINCIPAL = ".*"', source, flags=re.MULTILINE)
+    assert len(lines) == 1
+    name = "Grace" if state.PRINCIPAL == "Ada" else "Ada"
     copy = tmp_path / "named" / "state.py"
     copy.parent.mkdir()
-    copy.write_bytes(source.replace(line, 'PRINCIPAL = "Ada"').encode("utf-8"))
-    write(repo, STACK.replace("the Principal's ruling", "Ada's ruling")
-          .replace("## Parked", "### 15. Waits on the order (2026-10-17)\n\n"
-                   "- Waits on: Ada's order.\n\n## Parked"))
+    copy.write_bytes(source.replace(lines[0], 'PRINCIPAL = "%s"' % name)
+                     .encode("utf-8"))
+    write(repo, fit(RAW_STACK.replace(
+        "## Parked", "### 15. Waits on the order (2026-10-17)\n\n"
+        "- Waits on: the Principal's order.\n\n## Parked"), name))
     run = subprocess.run([sys.executable, str(copy), "--since", "2026-10-01",
                           "--stack", str(repo / "plans" / "stack.md")],
                          capture_output=True)
     out = run.stdout.decode("utf-8").replace("\r\n", "\n")
     assert run.returncode == 0, run.stderr
-    assert "## Waits on Ada\n[med] 11. The open ask" in out
+    assert "## Waits on %s\n[med] 11. The open ask" % name in out
     assert "15. Waits on the order" not in out
 
 
@@ -387,7 +403,7 @@ def test_a_heading_in_a_code_block_is_not_a_frame(tmp_path):
 # The kit's own template, with two frames pushed on it.
 
 def from_template(root: Path) -> Path:
-    text = TEMPLATE.replace("{{date}}", "2026-11-12")
+    text = fit(TEMPLATE).replace("{{date}}", "2026-11-12")
     return write(root, text.replace("### 1. The destination", TWO_FRAMES
                                     + "### 1. The destination"))
 
@@ -408,8 +424,8 @@ def test_the_template_with_two_frames_reads_as_three_frames(tmp_path, capsys):
     assert "3. Port the state tool (2026-11-12)\n" in out
     assert "  - Status 2026-11-12 09:00 (peer-01): pushed and claimed." in out
     decisions = out.split("## Open decisions\n")[1].split("\n\n")[0]
-    assert decisions == ("2. Choose the test runner (2026-11-12): "
-                         "the Principal's ruling on the runner.")
+    assert decisions == fit("2. Choose the test runner (2026-11-12): "
+                            "the Principal's ruling on the runner.")
     assert "12. The index is stale" not in out
 
     out = page(tmp_path, capsys=capsys)
@@ -419,7 +435,7 @@ def test_the_template_with_two_frames_reads_as_three_frames(tmp_path, capsys):
 def test_the_template_prints_a_since_page(tmp_path, capsys):
     from_template(tmp_path)
     out = page(tmp_path, "--since", "2026-11-01", capsys=capsys)
-    assert "## Waits on the Principal\n2. Choose the test runner" in out
+    assert fit("## Waits on the Principal\n2. Choose the test runner") in out
     rulings = out.split("## Rulings since 2026-11-01\n")[1]
     assert rulings.strip() == "None.", "a dated mark on a bullet is not a status line"
 
@@ -437,7 +453,7 @@ def test_the_copy_of_the_template_matches_the_kit():
 
 # The page for the Principal's return, `--since`.
 
-SINCE_STACK = STACK.replace(
+SINCE_STACK = fit(RAW_STACK.replace(
     "- Status 2026-10-17 11:00 (peer-01): the second line.\n",
     "- Status 2026-10-17 11:00 (peer-01): the second line.\n"
     "- Status 2026-10-18 01:00 (peer-01): the cheap fix runs (assumed: the "
@@ -454,7 +470,7 @@ SINCE_STACK = STACK.replace(
     "### 13. A high ask (2026-10-17)\n\n- Meta workflow.\n"
     "- Waits on: the Principal's ruling [high].\n\n### 14. An order (2026-10-17)\n\n"
     "- Meta workflow.\n- Waits on: the Principal's order.\n\n"
-    "### 11. The open ask")
+    "### 11. The open ask"))
 
 
 def archive(repo: Path, day: str, text: str) -> None:
@@ -478,7 +494,7 @@ def test_since_prints_four_sections_and_nothing_else(since_repo, capsys):
     heads = [x for x in out.splitlines() if x.startswith("## ")]
     assert heads == ["## Closed since 2026-10-17",
                      "## Decided under assumption since 2026-10-17",
-                     "## Waits on the Principal", "## Rulings since 2026-10-17"]
+                     fit("## Waits on the Principal"), "## Rulings since 2026-10-17"]
     assert "Held by" not in out
 
 
@@ -492,19 +508,19 @@ def test_since_lists_the_archived_frames_from_the_date(since_repo, capsys):
 def test_since_lists_assumptions_and_rulings_newest_first(since_repo, capsys):
     out = page(since_repo, "--since", "2026-10-17", capsys=capsys)
     section = out.split("## Decided under assumption")[1].split("## Waits")[0]
-    assert "(assumed: the Principal takes the cheap fix)" in section
+    assert fit("(assumed: the Principal takes the cheap fix)") in section
     assert "an old guess" not in out, "a line before the date stays out"
     rulings = out.split("## Rulings since 2026-10-17")[1]
     rows = [x for x in rulings.splitlines() if x.strip() and "::" in x]
-    assert rows[0].startswith("11. The open ask waits on the Principal (2026-10-17) :: "
-                              "- Status 2026-10-18 03:00")
+    assert rows[0].startswith(fit("11. The open ask waits on the Principal "
+                                  "(2026-10-17) :: - Status 2026-10-18 03:00"))
     assert rows[1].startswith("10. The held frame") and '"yes"' in rows[1]
     assert len(rows) == 2
 
 
 def test_since_ranks_the_waits_and_drops_the_order_waits(since_repo, capsys):
     out = page(since_repo, "--since", "2026-10-17", capsys=capsys)
-    section = out.split("## Waits on the Principal")[1].split("## Rulings")[0]
+    section = out.split(fit("## Waits on the Principal"))[1].split("## Rulings")[0]
     rows = [x for x in section.splitlines() if x.startswith("[")]
     assert rows[0].startswith("[high] 13. A high ask")
     assert rows[1].startswith("[med] 11. The open ask")
@@ -512,17 +528,17 @@ def test_since_ranks_the_waits_and_drops_the_order_waits(since_repo, capsys):
 
 
 def test_since_cuts_the_oldest_rows_to_the_cap(since_repo, capsys):
-    many = "".join("- Status 2026-10-18 %02d:%02d (peer-01): (assumed: the "
-                   "Principal's question %d %s).\n" % (h, m, h * 60 + m, "x" * 200)
-                   for h in range(4, 10) for m in range(0, 60, 2))
+    many = fit("".join("- Status 2026-10-18 %02d:%02d (peer-01): (assumed: the "
+                       "Principal's question %d %s).\n" % (h, m, h * 60 + m, "x" * 200)
+                       for h in range(4, 10) for m in range(0, 60, 2)))
     write(since_repo, SINCE_STACK.replace(
         "- Reasoning: `plans/archive/x.md`.\n",
         "- Reasoning: `plans/archive/x.md`.\n" + many))
     out = page(since_repo, "--since", "2026-10-17", capsys=capsys)
     assert len(out) <= 12000
     assert "older rows cut to keep the page under 12000 characters." in out
-    assert "Principal's question 598" in out, "the newest row stays"
-    assert "Principal's question 240 " not in out, "the oldest row goes"
+    assert fit("the Principal's question 598") in out, "the newest row stays"
+    assert fit("the Principal's question 240 ") not in out, "the oldest row goes"
 
 
 def test_since_refuses_a_value_that_is_not_a_date(since_repo):
@@ -531,10 +547,10 @@ def test_since_refuses_a_value_that_is_not_a_date(since_repo):
 
 
 def with_statuses(repo: Path, *lines: str) -> None:
-    """Add status lines to frame 10 of the `--since` fixture."""
+    """Add status lines to frame 10 of the `--since` fixture, through `fit`."""
     write(repo, SINCE_STACK.replace(
         "- Reasoning: `plans/archive/x.md`.\n",
-        "- Reasoning: `plans/archive/x.md`.\n" + "".join(x + "\n" for x in lines)))
+        "- Reasoning: `plans/archive/x.md`.\n" + "".join(fit(x) + "\n" for x in lines)))
 
 
 def rulings_of(out: str) -> list[str]:
@@ -573,32 +589,32 @@ def test_only_the_assumed_mark_counts_as_an_assumption(since_repo, capsys):
                   "- Status 2026-10-18 07:00 (peer-01): taken by timeout.")
     out = page(since_repo, "--since", "2026-10-17", capsys=capsys)
     section = out.split("## Decided under assumption")[1].split("## Waits")[0]
-    assert "(assumed: the Principal takes the cheap fix)" in section
+    assert fit("(assumed: the Principal takes the cheap fix)") in section
     assert "a plan step" not in section
     assert "taken by timeout" not in section, "the kit defines no timeout phrase"
 
 
 def test_a_wait_of_nothing_is_no_decision_and_impact_words_rate(since_repo, capsys):
     text = SINCE_STACK.replace(
-        "- Waits on: the Principal's ruling [high].",
-        "- Waits on: nothing. The Principal ruled the shape [high].").replace(
-        "- Waits on: the Principal's ruling on the index [med].",
-        "- Waits on: the Principal's ruling, medium impact.")
+        fit("- Waits on: the Principal's ruling [high]."),
+        fit("- Waits on: nothing. The Principal ruled the shape [high].")).replace(
+        fit("- Waits on: the Principal's ruling on the index [med]."),
+        fit("- Waits on: the Principal's ruling, medium impact."))
     write(since_repo, text)
     out = page(since_repo, "--since", "2026-10-17", capsys=capsys)
-    section = out.split("## Waits on the Principal")[1].split("## Rulings")[0]
+    section = out.split(fit("## Waits on the Principal"))[1].split("## Rulings")[0]
     rows = [x for x in section.splitlines() if x.strip()]
-    assert rows == ["[med] 11. The open ask waits on the Principal (2026-10-17): "
-                    "the Principal's ruling, medium impact."]
+    assert rows == [fit("[med] 11. The open ask waits on the Principal (2026-10-17): "
+                        "the Principal's ruling, medium impact.")]
 
 
 def test_a_ruling_on_a_closed_frame_shows_from_the_archive(since_repo, capsys):
-    archive(since_repo, "2026-10-18",
+    archive(since_repo, "2026-10-18", fit(
             "### 7. A closed index frame (2026-10-10) [aaaa1111]\n\n"
             "- Status 2026-10-18 00:30 (x): **ruled. The Principal, 2026-10-18 "
             '00:29, in the terminal: "close it"** (ruled: the Principal, in '
             "their words).\n"
-            "- Status 2026-10-18 00:40 (x): closed (assumed: they wanted it closed).\n")
+            "- Status 2026-10-18 00:40 (x): closed (assumed: they wanted it closed).\n"))
     out = page(since_repo, "--since", "2026-10-17", capsys=capsys)
     assert any(r.startswith("7. A closed index frame (2026-10-10) (closed) :: ")
                and "close it" in r for r in rulings_of(out))
