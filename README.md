@@ -73,12 +73,14 @@ status tool.
 Do the steps in this order. The order matters, because step 1 stops step
 3 from parking a session.
 
-1. **The permission rule, first.** Add this to `.claude/settings.json`
+1. **The permission rules, first.** Add these to `.claude/settings.json`
    under `permissions.allow`, with your own interpreter in place of
    `python`:
 
    ```
-   "Bash(python tools/handover.py:*)"
+   "Bash(python tools/handover.py:*)",
+   "Bash(python tools/state.py:*)",
+   "Bash(python tools/status.py:*)"
    ```
 
    Do this before anything arms a watcher. A permission prompt parks a
@@ -180,12 +182,16 @@ Principal, on a wall and its fix, on the reviews, and on the tools.
 Do the steps in this order. The order matters, because a watcher that
 arms with the new timeout under the old cap is killed with no exit code.
 
-1. **The settings, first.** Merge three things into
+1. **The settings, first.** Merge four things into
    `.claude/settings.json` from `meta/settings.json`: the `env` block
    with `BASH_MAX_TIMEOUT_MS`, the keys `agentPushNotifEnabled` and
-   `inputNeededNotifEnabled`, and the new end of the standing instruction
-   in the first `UserPromptSubmit` hook. Merge into the blocks that are
-   already there. Never replace the file.
+   `inputNeededNotifEnabled`, the new end of the standing instruction
+   in the first `UserPromptSubmit` hook, and the two `permissions.allow`
+   rules `Bash(python tools/state.py:*)` and
+   `Bash(python tools/status.py:*)`. Use your own interpreter in place of
+   `python`. A permission prompt parks a session, so add the rules before
+   the brief names the two tools. Merge into the blocks that are already
+   there. Never replace the file.
 2. **The tool.** Diff `meta/tools/handover.py` against
    `tools/handover.py`, and the two test files, the same way as step 3
    above. Replace each file whole unless the diff proves local content.
@@ -429,8 +435,9 @@ Nothing works before these five exist. Write them in this order.
    already have. Change the interpreter name from `python` to the
    answer of question 6 if they differ. The hook prints your session id
    at every wake, and the wake procedure needs that id to claim a frame.
-   Keep the `permissions.allow` entry in that file as well. It is not a
-   convenience, and step 5 of this README says what it prevents. Keep
+   Keep the three `permissions.allow` rules in that file as well. They
+   are not a convenience, and step 5 of this README says what they
+   prevent. Keep
    the `env` block too. `BASH_MAX_TIMEOUT_MS` lets a standby's watcher
    live one day, and without it the harness kills the watcher at two
    hours or less. Keep the two notification keys as well.
@@ -547,9 +554,10 @@ not in a project.** Copy `meta/tools/handover.py` to `tools/handover.py`,
 python -m pytest tools/test_handover.py -q
 ```
 
-**Keep the permission rule that `meta/settings.json` carries**, and match
-its interpreter to your answer to question 6. The rule is
-`Bash(python tools/handover.py:*)`, and it is not a convenience. A
+**Keep the permission rules that `meta/settings.json` carries**, and
+match their interpreter to your answer to question 6. The rules are
+`Bash(python tools/handover.py:*)`, `Bash(python tools/state.py:*)` and
+`Bash(python tools/status.py:*)`, and they are not a convenience. A
 permission prompt parks a session mid-turn, and a parked session drains
 nothing. One session held its messages for six hours that way. So a
 standby that must ask permission to arm its own watcher can never be

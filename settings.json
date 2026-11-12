@@ -6,7 +6,9 @@
   "inputNeededNotifEnabled": true,
   "permissions": {
     "allow": [
-      "Bash(python tools/handover.py:*)"
+      "Bash(python tools/handover.py:*)",
+      "Bash(python tools/state.py:*)",
+      "Bash(python tools/status.py:*)"
     ]
   },
   "hooks": {
