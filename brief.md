@@ -58,8 +58,9 @@ three warnings only:
   it landed, and spends the clean context the standby holds for you.
   `plans/operating-facts.md` carries the measurements.
 
-  Use a message only when the command reports 4. Message the peer name
-  the command prints, and no other name. Tell it to run the take command.
+  Use a message only when the command reports 4, or to reply to a
+  question that the taker sent you. On 4, message the peer name the
+  command prints, and no other name. Tell it to run the take command.
   Believe the reply only when it names the session id you claimed.
 
   Never pick a peer from the harness peer list. That list is machine-wide
