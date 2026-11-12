@@ -242,6 +242,10 @@ A wall moves to its fix in this order:
    reach: every place with the same gap. The fix covers the reach.
    Fourteen frames in a row once fixed none of their walls at the
    source.
+4. Before pass 1 of a fix that changes a structure, one agent writes
+   three to five shapes, each with its cost, its failure and its
+   measure. You judge the page. In one frame, passes 2 to 7 kept the
+   shape that pass 1 chose.
 
 {{builder model}} builds, {{judge model}} judges. An implementer or a
 sweeper runs on {{builder model}}. The session that holds the frame is
